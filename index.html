@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>MilPlay V2.0</title>
+    <title>MilPlay V2.1</title>
     <script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
     <style>
         :root {
@@ -356,13 +356,13 @@
         @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
         .loading-text { color: #cbd5e1; font-size: 1.1rem; font-weight: 500; letter-spacing: 0.5px; }
 
-        /* Rodapé Direita */
+        /* Rodapé Direita - Oculto por padrão, aparece apenas na Home */
         .footer-copyright {
+            display: none;
             position: fixed;
             bottom: 15px;
             right: 25px;
             z-index: 1000;
-            display: flex;
             align-items: center;
             gap: 8px;
             font-size: 0.85rem;
@@ -374,6 +374,12 @@
             border: 1px solid rgba(255, 255, 255, 0.05);
             pointer-events: none;
         }
+
+        /* Regra para exibir o rodapé apenas quando a Home estiver ativa */
+        #homeView.active ~ .footer-copyright {
+            display: flex;
+        }
+
         .whatsapp-icon {
             width: 16px;
             height: 16px;
@@ -410,7 +416,7 @@
     <!-- Top Logo Container -->
     <div class="top-logo">
         <img src="logo.png" alt="Logo" onerror="this.style.display='none'; document.getElementById('altBrandText').style.display='block';">
-        <div id="altBrandText" class="brand-text" style="display:none;">MilPlay <span>V2.0</span></div>
+        <div id="altBrandText" class="brand-text" style="display:none;">MilPlay <span>V2.1</span></div>
     </div>
 
     <!-- Home View (Estilo Imagem 2 - IB Player) -->
@@ -544,7 +550,7 @@
         <video id="videoVod" controls autoplay></video>
     </div>
 
-    <!-- Footer Copyright Fixado na Inferior Direita -->
+    <!-- Footer Copyright Fixado na Inferior Direita (Aparece apenas na Home) -->
     <footer class="footer-copyright">
         <span>Direitos Autorais Demilson Lemos -</span>
         <svg class="whatsapp-icon" viewBox="0 0 24 24">
@@ -623,7 +629,7 @@
                 let serv = s.endsWith('/') ? s.slice(0, -1) : s;
                 return `${serv}/get.php?username=${u}&password=${p}&type=m3u_plus&output=m3u8`;
             }
-            return 'playlist.txt';
+            return 'https://gist.githubusercontent.com/sempreconceito/267043c96ac39ed5b1b9f3680b91974a/raw/f7cb4d3a34fb734cbec7a1c313822cd5aab72da9/CANAISJOABE.M3U';
         }
 
         async function carregarPlaylistEExecutar(callback) {
@@ -759,7 +765,6 @@
             const ul = document.getElementById('liveList');
             ul.innerHTML = '';
             
-            // Exibe todos os canais disponíveis na lista sem corte de limite
             lista.forEach(item => {
                 const li = document.createElement('li');
                 li.className = 'live-item';
@@ -932,4 +937,4 @@
         });
     </script>
 </body>
-</html>
+</html>[cite: 3]
