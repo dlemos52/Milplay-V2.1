@@ -1,0 +1,901 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MilPlay V2.0</title>
+    <script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
+    <style>
+        :root {
+            --bg-color: #0c080d;
+            --primary-red: #800e13;
+            --card-bg: #5c090c;
+            --card-hover: #b31217;
+            --focus-outline: #ffffff;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            user-select: none;
+        }
+
+        body {
+            background-color: var(--bg-color);
+            background: radial-gradient(circle at center, #260307 0%, #0c080d 100%);
+            color: #f8fafc;
+            height: 100vh;
+            width: 100vw;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            position: relative;
+        }
+
+        /* Zonas Hotspot do Botão Voltar (Canto Superior Esquerdo e Direito) */
+        .back-trigger-zone {
+            position: fixed;
+            top: 0;
+            width: 150px;
+            height: 80px;
+            z-index: 999;
+        }
+        .back-trigger-left { left: 0; }
+        .back-trigger-right { right: 0; }
+
+        .btn-voltar-global {
+            position: fixed;
+            top: 20px;
+            z-index: 1000;
+            background: rgba(179, 18, 23, 0.9);
+            color: #fff;
+            border: 2px solid rgba(255,255,255,0.4);
+            padding: 10px 22px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: bold;
+            font-size: 1rem;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.3s ease, transform 0.2s;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.5);
+        }
+
+        .btn-voltar-left { left: 30px; }
+        .btn-voltar-right { right: 30px; }
+
+        .back-trigger-left:hover ~ .btn-voltar-left,
+        .btn-voltar-left:hover {
+            opacity: 1;
+            pointer-events: auto;
+        }
+
+        .back-trigger-right:hover ~ .btn-voltar-right,
+        .btn-voltar-right:hover {
+            opacity: 1;
+            pointer-events: auto;
+        }
+
+        /* Views */
+        .view {
+            display: none;
+            width: 100%;
+            height: 100%;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+        }
+        .view.active { display: flex; }
+
+        /* Top Logo Container */
+        .top-logo {
+            position: absolute;
+            top: 3vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .top-logo img {
+            max-height: 110px;
+            object-fit: contain;
+            filter: drop-shadow(0 4px 10px rgba(0,0,0,0.6));
+        }
+        .brand-text {
+            font-size: 2.8rem;
+            font-weight: 800;
+            letter-spacing: 1px;
+            color: #ffffff;
+        }
+        .brand-text span { color: #e50914; }
+
+        /* Dashboard estilo IB Player */
+        .dashboard-container {
+            display: grid;
+            grid-template-columns: 2.2fr 1.8fr 1.6fr;
+            gap: 25px;
+            width: 85vw;
+            max-width: 1250px;
+            height: 55vh;
+            max-height: 520px;
+            align-items: center;
+            margin-top: 60px;
+        }
+
+        .card-main-live {
+            background: linear-gradient(145deg, #7a0c11, #400508);
+            border: 3px solid rgba(255,255,255,0.2);
+            border-radius: 12px;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 20px;
+            cursor: pointer;
+            transition: all 0.25s ease;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.7);
+        }
+
+        .grid-middle {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            grid-template-rows: 1fr 1fr;
+            gap: 20px;
+            height: 100%;
+        }
+
+        .grid-right {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+            height: 100%;
+            justify-content: center;
+        }
+
+        .ib-card {
+            background: linear-gradient(145deg, #66090d, #330305);
+            border: 2px solid rgba(255,255,255,0.15);
+            border-radius: 10px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 12px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            box-shadow: 0 8px 20px rgba(0,0,0,0.5);
+            padding: 15px;
+        }
+
+        .ib-card-row {
+            background: rgba(20, 10, 15, 0.6);
+            border: 1px solid rgba(255,255,255,0.15);
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            padding: 14px 20px;
+            gap: 15px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .card-main-live:hover, .ib-card:hover, .ib-card-row:hover,
+        .card-main-live:focus, .ib-card:focus, .ib-card-row:focus {
+            transform: scale(1.04);
+            border-color: #ffffff;
+            box-shadow: 0 0 25px rgba(229, 9, 20, 0.8);
+            outline: none;
+        }
+
+        .ib-icon {
+            fill: #ffffff;
+            width: 48px;
+            height: 48px;
+        }
+        .ib-icon-lg {
+            width: 90px;
+            height: 90px;
+        }
+        .ib-icon-sm {
+            width: 26px;
+            height: 26px;
+        }
+
+        .card-title {
+            font-size: 1.1rem;
+            font-weight: 700;
+            color: #ffffff;
+            letter-spacing: 0.5px;
+        }
+        .card-title-lg {
+            font-size: 1.8rem;
+        }
+
+        /* Modal Configurações */
+        .modal-overlay {
+            position: fixed; top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(0,0,0,0.85); display: none; align-items: center; justify-content: center; z-index: 2000;
+        }
+        .modal-overlay.active { display: flex; }
+        .modal-box {
+            background: #1e1b2e; border: 1px solid #e50914; padding: 30px; border-radius: 12px;
+            width: 100%; max-width: 450px; box-shadow: 0 20px 40px rgba(0,0,0,0.8);
+        }
+        .modal-title { font-size: 1.3rem; font-weight: bold; margin-bottom: 20px; color: #e50914; text-align: center; }
+        .form-control { margin-bottom: 15px; }
+        .form-control label { display: block; font-size: 0.85rem; color: #cbd5e1; margin-bottom: 5px; }
+        .form-control input {
+            width: 100%; padding: 12px; border-radius: 6px; border: 1px solid #475569; background: #0f172a; color: #fff; outline: none;
+        }
+        .modal-buttons { display: flex; gap: 10px; margin-top: 20px; }
+        .btn-action { flex: 1; padding: 12px; border-radius: 6px; border: none; font-weight: bold; cursor: pointer; }
+        .btn-primary { background: #e50914; color: #fff; }
+        .btn-secondary { background: #334155; color: #fff; }
+
+        /* Live TV View */
+        #liveView { flex-direction: row; }
+        .live-sidebar {
+            width: 380px; background: #110711; border-right: 1px solid rgba(255,255,255,0.1);
+            display: flex; flex-direction: column; height: 100vh;
+        }
+        .search-box { padding: 15px; background: #1e1b2e; }
+        .search-box input {
+            width: 100%; padding: 10px 14px; border-radius: 6px; border: 1px solid #475569; background: #0f172a; color: #fff; outline: none; font-size: 0.95rem;
+        }
+        .live-list { flex: 1; overflow-y: auto; list-style: none; }
+        .live-item {
+            display: flex; align-items: center; padding: 12px 18px; gap: 15px;
+            cursor: pointer; border-bottom: 1px solid rgba(255,255,255,0.05); transition: background 0.2s;
+        }
+        .live-item:hover, .live-item.active, .live-item:focus { background: #7a0c11; outline: none; }
+        .live-item img { width: 40px; height: 40px; object-fit: contain; background: #000; border-radius: 4px; }
+        .live-info { display: flex; flex-direction: column; overflow: hidden; }
+        .live-name { font-size: 0.95rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-weight: 600; }
+        .live-group { font-size: 0.75rem; color: #cbd5e1; margin-top: 2px; }
+        .live-player-area { flex: 1; background: #000; display: flex; align-items: center; justify-content: center; height: 100vh; position: relative; }
+        .live-player-area video { width: 100%; height: 100%; }
+
+        /* VOD View (Filmes & Séries) */
+        #vodView {
+            justify-content: flex-start;
+            padding: 80px 50px 40px 50px;
+            overflow-y: auto;
+            height: 100vh;
+        }
+        .vod-header { 
+            display: flex; 
+            justify-content: space-between; 
+            align-items: center; 
+            margin-bottom: 25px; 
+            width: 100%; 
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+            padding-bottom: 15px;
+        }
+        .vod-title { font-size: 1.8rem; font-weight: bold; color: #e50914; }
+        
+        .vod-header-right {
+            display: flex;
+            align-items: center;
+            gap: 20px;
+        }
+        .view-all-link {
+            color: #38bdf8;
+            font-size: 1.1rem;
+            font-weight: 600;
+            cursor: pointer;
+            text-decoration: underline;
+            transition: color 0.2s;
+            padding: 8px 12px;
+            border-radius: 6px;
+        }
+        .view-all-link:hover, .view-all-link:focus { color: #7dd3fc; outline: none; background: rgba(255,255,255,0.1); }
+
+        .vod-row-container { margin-bottom: 30px; width: 100%; }
+        .vod-row-title { font-size: 1.25rem; margin-bottom: 14px; color: #e2e8f0; font-weight: bold; }
+        .vod-row-wrapper { display: flex; align-items: center; position: relative; width: 100%; }
+        .vod-row {
+            display: flex; gap: 18px; overflow-x: auto; scroll-behavior: smooth; padding: 8px 4px; width: 100%; scrollbar-width: none;
+        }
+        .vod-row::-webkit-scrollbar { display: none; }
+        
+        .vod-poster {
+            flex: 0 0 150px; height: 225px; background: #1e1b2e; border-radius: 8px;
+            overflow: hidden; cursor: pointer; position: relative; border: 2px solid transparent; transition: all 0.2s;
+        }
+        .vod-poster:hover, .vod-poster:focus { transform: scale(1.06); border-color: #e50914; outline: none; box-shadow: 0 0 15px rgba(229, 9, 20, 0.6); }
+        .vod-poster img { width: 100%; height: 100%; object-fit: cover; }
+        .vod-poster-title {
+            position: absolute; bottom: 0; left: 0; right: 0; background: rgba(0,0,0,0.85);
+            font-size: 0.8rem; padding: 8px 5px; text-align: center; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; color: #fff;
+        }
+
+        .scroll-btn {
+            position: absolute; z-index: 10; background: rgba(30, 27, 46, 0.95); color: #fff;
+            border: 1px solid #475569; width: 42px; height: 42px; border-radius: 50%; cursor: pointer;
+            display: flex; align-items: center; justify-content: center; font-size: 1.2rem;
+        }
+        .scroll-left { left: -20px; }
+        .scroll-right { right: -20px; }
+        
+        .load-more-container { text-align: center; margin: 30px 0 60px 0; width: 100%; }
+        .btn-load-more {
+            background: #1e1b2e; border: 2px solid #e50914; color: #fff; padding: 14px 40px; border-radius: 8px; cursor: pointer; font-weight: bold; font-size: 1.1rem; transition: all 0.2s;
+        }
+        .btn-load-more:hover, .btn-load-more:focus { background: #e50914; transform: scale(1.05); outline: none; }
+
+        /* VOD Player Modal */
+        #vodPlayerModal {
+            position: fixed; top: 0; left: 0; right: 0; bottom: 0;
+            background: #000; z-index: 3000; display: none; align-items: center; justify-content: center;
+        }
+        #vodPlayerModal.active { display: flex; }
+        #vodPlayerModal video { width: 100%; height: 100%; }
+
+        .btn-close-player {
+            position: absolute; top: 25px; right: 35px; z-index: 3100;
+            background: rgba(229, 9, 20, 0.85); color: #fff; border: none;
+            padding: 10px 20px; border-radius: 6px; font-size: 1rem; font-weight: bold; cursor: pointer;
+        }
+
+        /* Indicator de Loading Sob Demanda */
+        .loading-overlay {
+            position: fixed; top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(12, 8, 13, 0.95); display: none; flex-direction: column;
+            align-items: center; justify-content: center; z-index: 4000; gap: 15px;
+            transition: opacity 0.3s ease;
+        }
+        .loading-spinner {
+            width: 55px; height: 55px; border: 4px solid rgba(229, 9, 20, 0.2);
+            border-top: 4px solid #e50914; border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+        }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+        .loading-text { color: #cbd5e1; font-size: 1.1rem; font-weight: 500; letter-spacing: 0.5px; }
+
+        @media (min-width: 1920px) {
+            .dashboard-container { max-width: 1500px; height: 60vh; }
+            .top-logo img { max-height: 135px; }
+            .card-title { font-size: 1.3rem; }
+            .card-title-lg { font-size: 2.2rem; }
+            .ib-icon { width: 56px; height: 56px; }
+            .ib-icon-lg { width: 110px; height: 110px; }
+            .vod-poster { flex: 0 0 180px; height: 270px; }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Loading Overlay -->
+    <div id="loadingOverlay" class="loading-overlay">
+        <div class="loading-spinner"></div>
+        <div class="loading-text" id="loadingText">Carregando lista...</div>
+    </div>
+
+    <!-- Zonas de detecção de mouse para botões Voltar ocultos -->
+    <div class="back-trigger-zone back-trigger-left"></div>
+    <div class="back-trigger-zone back-trigger-right"></div>
+
+    <button id="btnVoltarLeft" class="btn-voltar-global btn-voltar-left" onclick="voltarHome()">‹ Voltar</button>
+    <button id="btnVoltarRight" class="btn-voltar-global btn-voltar-right" onclick="voltarHome()">‹ Voltar</button>
+
+    <!-- Top Logo Container -->
+    <div class="top-logo">
+        <img src="logo.png" alt="Logo" onerror="this.style.display='none'; document.getElementById('altBrandText').style.display='block';">
+        <div id="altBrandText" class="brand-text" style="display:none;">MilPlay <span>V2.0</span></div>
+    </div>
+
+    <!-- Home View (Estilo Imagem 2 - IB Player) -->
+    <div id="homeView" class="view active">
+        <div class="dashboard-container">
+            
+            <!-- Card Principal: Live TV (Esquerda) -->
+            <div class="card-main-live" tabindex="0" onclick="abrirLiveTV()">
+                <svg class="ib-icon ib-icon-lg" viewBox="0 0 24 24">
+                    <path d="M21 3H3c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h5v2h8v-2h5c1.1 0 1.99-.9 1.99-2L23 5c0-1.1-.9-2-2-2zm0 14H3V5h18v12zm-11-7l6 3.5-6 3.5V10z"/>
+                </svg>
+                <span class="card-title card-title-lg">Live TV</span>
+            </div>
+
+            <!-- Grade Central: Filmes, Séries, Conta, Servidor -->
+            <div class="grid-middle">
+                <div class="ib-card" tabindex="0" onclick="abrirVOD('filmes')">
+                    <svg class="ib-icon" viewBox="0 0 24 24">
+                        <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 14.5v-9l6 4.5-6 4.5z"/>
+                    </svg>
+                    <span class="card-title">Movies</span>
+                </div>
+
+                <div class="ib-card" tabindex="0" onclick="abrirVOD('series')">
+                    <svg class="ib-icon" viewBox="0 0 24 24">
+                        <path d="M18 4l2 4h-3l-2-4h-2l2 4h-3l-2-4H8l2 4H7L5 4H4c-1.1 0-1.99.9-1.99 2L2 18c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V4h-4z"/>
+                    </svg>
+                    <span class="card-title">Series</span>
+                </div>
+
+                <div class="ib-card" tabindex="0" onclick="abrirModalConfig()">
+                    <svg class="ib-icon" viewBox="0 0 24 24">
+                        <path d="M16 11c1.66 0 2.99-1.34 2.99-3S17.66 5 16 5c-1.66 0-3 1.34-3 3s1.34 3 3 3zm-8 0c1.66 0 2.99-1.34 2.99-3S9.66 5 8 5C6.34 5 5 6.34 5 8s1.34 3 3 3zm0 2c-2.33 0-7 1.17-7 3.5V19h14v-2.5c0-2.33-4.67-3.5-7-3.5zm8 0c-.29 0-.62.02-.97.05 1.16.84 1.97 1.97 1.97 3.45V19h6v-2.5c0-2.33-4.67-3.5-7-3.5z"/>
+                    </svg>
+                    <span class="card-title">Account</span>
+                </div>
+
+                <div class="ib-card" tabindex="0" onclick="abrirModalConfig()">
+                    <svg class="ib-icon" viewBox="0 0 24 24">
+                        <path d="M12 6v3l4-4-4-4v3c-4.42 0-8 3.58-8 8 0 1.57.46 3.03 1.24 4.26L6.7 14.8C6.25 13.93 6 12.99 6 12c0-3.31 2.69-6 6-6zm6.76 1.74L17.3 9.2c.45.87.7 1.81.7 2.8 0 3.31-2.69 6-6 6v-3l-4 4 4 4v-3c4.42 0 8-3.58 8-8 0-1.57-.46-3.03-1.24-4.26z"/>
+                    </svg>
+                    <span class="card-title">Change Server</span>
+                </div>
+            </div>
+
+            <!-- Coluna Direita: Opções Laterais -->
+            <div class="grid-right">
+                <div class="ib-card-row" tabindex="0" onclick="abrirModalConfig()">
+                    <svg class="ib-icon ib-icon-sm" viewBox="0 0 24 24">
+                        <path d="M19.14 12.94c.04-.3.06-.61.06-.94 0-.32-.02-.64-.07-.94l2.03-1.58c.18-.14.23-.41.12-.61l-1.92-3.32c-.12-.22-.37-.29-.59-.22l-2.39.96c-.5-.38-1.03-.7-1.62-.94l-.36-2.54c-.04-.24-.24-.41-.48-.41h-3.84c-.24 0-.43.17-.47.41l-.36 2.54c-.59.24-1.13.57-1.62.94l-2.39-.96c-.22-.08-.47 0-.59.22L2.74 8.87c-.12.21-.08.47.12.61l2.03 1.58c-.05.3-.09.63-.09.94s.02.64.07.94l-2.03 1.58c-.18.14-.23.41-.12.61l1.92 3.32c.12.22.37.29.59.22l2.39-.96c-.5.38 1.03.7 1.62.94l.36 2.54c.05.24.24.41.48.41h3.84c.24 0 .44-.17.47-.41l.36-2.54c.59-.24 1.13-.56 1.62-.94l2.39.96c.22.08.47 0 .59-.22l1.92-3.32c.12-.22.07-.47-.12-.61l-2.01-1.58zM12 15.6c-1.98 0-3.6-1.62-3.6-3.6s1.62-3.6 3.6-3.6 3.6 1.62 3.6 3.6-1.62 3.6-3.6-3.6z"/>
+                    </svg>
+                    <span class="card-title">Settings</span>
+                </div>
+
+                <div class="ib-card-row" tabindex="0" onclick="salvarCredenciais()">
+                    <svg class="ib-icon ib-icon-sm" viewBox="0 0 24 24">
+                        <path d="M12 4V1L8 5l4 4V6c3.31 0 6 2.69 6 6 0 1.01-.25 1.97-.7 2.8l1.46 1.46C19.54 15.03 20 13.57 20 12c0-4.42-3.58-8-8-8zm0 14c-3.31 0-6-2.69-6-6 0-1.01.25-1.97.7-2.8L5.24 7.74C4.46 8.97 4 10.43 4 12c0 4.42 3.58 8 8 8v3l4-4-4-4v3z"/>
+                    </svg>
+                    <span class="card-title">Reload Portal</span>
+                </div>
+
+                <div class="ib-card-row" tabindex="0" onclick="window.close()">
+                    <svg class="ib-icon ib-icon-sm" viewBox="0 0 24 24">
+                        <path d="M10.09 15.59L11.5 17l5-5-5-5-1.41 1.41L12.67 11H3v2h9.67l-2.58 2.59zM19 3H5c-1.11 0-2 .9-2 2v4h2V5h14v14H5v-4H3v4c0 1.1.89 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2z"/>
+                    </svg>
+                    <span class="card-title">EXIT</span>
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+    <!-- Modal Configurações -->
+    <div id="modalConfig" class="modal-overlay">
+        <div class="modal-box">
+            <div class="modal-title">Configurar Playlist / Servidor</div>
+            <div class="form-control">
+                <label>URL M3U Direta</label>
+                <input type="text" id="cfgM3u" placeholder="http://exemplo.com/lista.m3u">
+            </div>
+            <div style="text-align: center; margin: 10px 0; color: #cbd5e1; font-size: 0.85rem;">OU XTREAM CODES</div>
+            <div class="form-control">
+                <label>Servidor (URL)</label>
+                <input type="text" id="cfgServer" placeholder="http://servidor.com:80">
+            </div>
+            <div class="form-control">
+                <label>Usuário</label>
+                <input type="text" id="cfgUser" placeholder="Usuário">
+            </div>
+            <div class="form-control">
+                <label>Senha</label>
+                <input type="password" id="cfgPass" placeholder="Senha">
+            </div>
+            <div class="modal-buttons">
+                <button class="btn-action btn-secondary" onclick="fecharModalConfig()">Cancelar</button>
+                <button class="btn-action btn-primary" onclick="salvarCredenciais()">Salvar e Carregar</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Live TV View (Todos os canais disponíveis sem cortes e sem logo sobreposto) -->
+    <div id="liveView" class="view">
+        <div class="live-sidebar">
+            <div class="search-box">
+                <input type="text" id="searchLive" placeholder="Buscar canal..." oninput="filtrarLive()">
+            </div>
+            <ul id="liveList" class="live-list"></ul>
+        </div>
+        <div class="live-player-area">
+            <video id="videoLive" controls autoplay></video>
+        </div>
+    </div>
+
+    <!-- VOD View (Filmes & Séries - Mantido Rápido e Perfeito) -->
+    <div id="vodView" class="view">
+        <div class="vod-header">
+            <div class="vod-title" id="vodTitle">Filmes</div>
+            <div class="vod-header-right">
+                <span class="view-all-link" tabindex="0" onclick="carregarViewAll()">View All (Ver Todos)</span>
+            </div>
+        </div>
+        <div id="vodContainer" style="width: 100%;"></div>
+        <div class="load-more-container" id="loadMoreContainer">
+            <button class="btn-load-more" tabindex="0" onclick="carregarMaisVod()">Carregar Mais</button>
+        </div>
+    </div>
+
+    <!-- VOD Player Modal -->
+    <div id="vodPlayerModal">
+        <button class="btn-close-player" onclick="fecharVodPlayer()">✕ Fechar (ESC)</button>
+        <video id="videoVod" controls autoplay></video>
+    </div>
+
+    <script>
+        let canaisLive = [];
+        let filmesVod = [];
+        let seriesVod = [];
+        let cacheCategoriasFilmes = {};
+        let cacheCategoriasSeries = {};
+        let limiteCategorias = 8;
+        let tipoVodAtual = 'filmes';
+        let playlistCarregada = false;
+        let hlsLive = new Hls();
+        let hlsVod = new Hls();
+
+        function alternarView(viewId) {
+            document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
+            document.getElementById(viewId).classList.add('active');
+            
+            if(viewId === 'homeView') {
+                document.getElementById('videoLive').pause();
+                document.getElementById('videoLive').src = '';
+                fecharVodPlayer();
+            }
+        }
+
+        function voltarHome() { alternarView('homeView'); }
+
+        function abrirModalConfig() {
+            document.getElementById('modalConfig').classList.add('active');
+            document.getElementById('cfgM3u').value = localStorage.getItem('m3u_url') || '';
+            document.getElementById('cfgServer').value = localStorage.getItem('xtream_server') || '';
+            document.getElementById('cfgUser').value = localStorage.getItem('xtream_user') || '';
+            document.getElementById('cfgPass').value = localStorage.getItem('xtream_pass') || '';
+        }
+
+        function fecharModalConfig() {
+            document.getElementById('modalConfig').classList.remove('active');
+        }
+
+        function salvarCredenciais() {
+            const m3u = document.getElementById('cfgM3u').value.trim();
+            const server = document.getElementById('cfgServer').value.trim();
+            const user = document.getElementById('cfgUser').value.trim();
+            const pass = document.getElementById('cfgPass').value.trim();
+
+            if (m3u) {
+                localStorage.setItem('m3u_url', m3u);
+                localStorage.removeItem('xtream_server');
+                localStorage.removeItem('xtream_user');
+                localStorage.removeItem('xtream_pass');
+            } else if (server && user && pass) {
+                localStorage.setItem('xtream_server', server);
+                localStorage.setItem('xtream_user', user);
+                localStorage.setItem('xtream_pass', pass);
+                localStorage.removeItem('m3u_url');
+            }
+            fecharModalConfig();
+            localStorage.removeItem('cache_parsed_m3u');
+            playlistCarregada = false;
+            carregarPlaylistEExecutar(() => alternarView('homeView'));
+        }
+
+        function obterUrlAlvo() {
+            const m3u = localStorage.getItem('m3u_url');
+            if (m3u) return m3u;
+            const s = localStorage.getItem('xtream_server');
+            const u = localStorage.getItem('xtream_user');
+            const p = localStorage.getItem('xtream_pass');
+            if (s && u && p) {
+                let serv = s.endsWith('/') ? s.slice(0, -1) : s;
+                return `${serv}/get.php?username=${u}&password=${p}&type=m3u_plus&output=m3u8`;
+            }
+            return 'playlist.txt';
+        }
+
+        async function carregarPlaylistEExecutar(callback) {
+            if (playlistCarregada) {
+                if (callback) callback();
+                return;
+            }
+
+            const loading = document.getElementById('loadingOverlay');
+            loading.style.display = 'flex';
+            loading.style.opacity = '1';
+
+            const cacheSalvo = localStorage.getItem('cache_parsed_m3u');
+            if (cacheSalvo) {
+                try {
+                    const dados = JSON.parse(cacheSalvo);
+                    canaisLive = dados.live || [];
+                    filmesVod = dados.filmes || [];
+                    seriesVod = dados.series || [];
+                    indexarCategorias();
+                    playlistCarregada = true;
+                    loading.style.opacity = '0';
+                    setTimeout(() => {
+                        loading.style.display = 'none';
+                        if (callback) callback();
+                    }, 100);
+                    return;
+                } catch(e) {
+                    localStorage.removeItem('cache_parsed_m3u');
+                }
+            }
+
+            const url = obterUrlAlvo();
+            try {
+                const res = await fetch(url);
+                const text = await res.text();
+                setTimeout(() => processarM3U(text, callback), 10);
+            } catch (e) {
+                try {
+                    const resFb = await fetch('playlist.txt');
+                    const textFb = await resFb.text();
+                    setTimeout(() => processarM3U(textFb, callback), 10);
+                } catch(err) {
+                    console.error(err);
+                    document.getElementById('loadingText').innerText = 'Erro ao carregar lista.';
+                }
+            }
+        }
+
+        function processarM3U(content, callback) {
+            document.getElementById('loadingText').innerText = 'Processando canais, filmes e séries...';
+            setTimeout(() => {
+                const lines = content.split('\n');
+                canaisLive = []; filmesVod = []; seriesVod = [];
+                let current = null;
+
+                for (let i = 0; i < lines.length; i++) {
+                    let l = lines[i].trim();
+                    if (l.startsWith('#EXTINF:')) {
+                        current = {};
+                        const logo = l.match(/tvg-logo="(.*?)"/);
+                        const group = l.match(/group-title="(.*?)"/);
+                        const name = l.split(',');
+                        current.logo = logo ? logo[1] : '';
+                        current.group = group ? group[1].toUpperCase() : 'GERAL';
+                        current.name = name[name.length - 1] || 'Conteúdo';
+                    } else if (l.startsWith('http://') || l.startsWith('https://')) {
+                        if (current) {
+                            current.url = l;
+                            const g = current.group;
+                            const u = l.toLowerCase();
+
+                            const isSerieGroup = g.includes('SERIE') || g.includes('SERIES') || g.includes('EPISODE') || g.includes('SEASON') || g.includes('NOVELA') || g.includes('DORAMA') || u.includes('/series/');
+                            const isFilmeGroup = g.includes('FILME') || g.includes('FILMES') || g.includes('MOVIE') || g.includes('VOD') || g.includes('CINEMA') || g.includes('LANÇAMENTO') || g.includes('LANCAMENTO') || g.includes('ADULTO') || g.includes('XXX') || g.includes('4K') || u.includes('/movie/');
+
+                            if (isSerieGroup) {
+                                seriesVod.push(current);
+                            } else if (isFilmeGroup) {
+                                filmesVod.push(current);
+                            } else {
+                                canaisLive.push(current);
+                            }
+                            current = null;
+                        }
+                    }
+                }
+
+                indexarCategorias();
+                playlistCarregada = true;
+
+                try {
+                    localStorage.setItem('cache_parsed_m3u', JSON.stringify({
+                        live: canaisLive,
+                        filmes: filmesVod,
+                        series: seriesVod
+                    }));
+                } catch(err) { console.log('Cache storage cheio ou indisponível', err); }
+
+                const loading = document.getElementById('loadingOverlay');
+                loading.style.opacity = '0';
+                setTimeout(() => {
+                    loading.style.display = 'none';
+                    if (callback) callback();
+                }, 100);
+            }, 10);
+        }
+
+        function indexarCategorias() {
+            cacheCategoriasFilmes = {};
+            for (let i = 0; i < filmesVod.length; i++) {
+                let item = filmesVod[i];
+                if (!cacheCategoriasFilmes[item.group]) cacheCategoriasFilmes[item.group] = [];
+                cacheCategoriasFilmes[item.group].push(item);
+            }
+
+            cacheCategoriasSeries = {};
+            for (let i = 0; i < seriesVod.length; i++) {
+                let item = seriesVod[i];
+                if (!cacheCategoriasSeries[item.group]) cacheCategoriasSeries[item.group] = [];
+                cacheCategoriasSeries[item.group].push(item);
+            }
+        }
+
+        function abrirLiveTV() {
+            carregarPlaylistEExecutar(() => {
+                alternarView('liveView');
+                renderizarListaLive(canaisLive);
+                if (canaisLive.length > 0) playLive(canaisLive[0].url);
+            });
+        }
+
+        function renderizarListaLive(lista) {
+            const ul = document.getElementById('liveList');
+            ul.innerHTML = '';
+            
+            // Exibe todos os canais disponíveis na lista sem corte de limite
+            lista.forEach(item => {
+                const li = document.createElement('li');
+                li.className = 'live-item';
+                li.tabIndex = 0;
+                li.onclick = () => {
+                    document.querySelectorAll('.live-item').forEach(el => el.classList.remove('active'));
+                    li.classList.add('active');
+                    playLive(item.url);
+                };
+                li.innerHTML = `<img src="${item.logo || ''}" onerror="this.src='logo.png'"><div class="live-info"><span class="live-name">${item.name}</span><span class="live-group">${item.group}</span></div>`;
+                ul.appendChild(li);
+            });
+        }
+
+        function filtrarLive() {
+            const termo = document.getElementById('searchLive').value.toLowerCase();
+            const res = canaisLive.filter(c => c.name.toLowerCase().includes(termo) || c.group.toLowerCase().includes(termo));
+            renderizarListaLive(res);
+        }
+
+        function playLive(url) {
+            const video = document.getElementById('videoLive');
+            if (Hls.isSupported()) {
+                hlsLive.destroy();
+                hlsLive = new Hls();
+                hlsLive.loadSource(url);
+                hlsLive.attachMedia(video);
+                hlsLive.on(Hls.Events.MANIFEST_PARSED, () => video.play().catch(e => console.log(e)));
+            } else {
+                video.src = url;
+                video.play().catch(e => console.log(e));
+            }
+        }
+
+        function abrirVOD(tipo) {
+            carregarPlaylistEExecutar(() => {
+                tipoVodAtual = tipo;
+                limiteCategorias = 8;
+                document.getElementById('vodTitle').innerText = tipo === 'filmes' ? 'Filmes / Locadora' : 'Séries';
+                document.getElementById('loadMoreContainer').style.display = 'block';
+                alternarView('vodView');
+                montarTelaVodFast();
+            });
+        }
+
+        function montarTelaVodFast() {
+            const container = document.getElementById('vodContainer');
+            container.innerHTML = '';
+            const cats = tipoVodAtual === 'filmes' ? cacheCategoriasFilmes : cacheCategoriasSeries;
+
+            const chavesCategorias = Object.keys(cats);
+            const categoriasVisiveis = chavesCategorias.slice(0, limiteCategorias);
+
+            if (limiteCategorias >= chavesCategorias.length) {
+                document.getElementById('loadMoreContainer').style.display = 'none';
+            } else {
+                document.getElementById('loadMoreContainer').style.display = 'block';
+            }
+
+            const fragment = document.createDocumentFragment();
+
+            categoriasVisiveis.forEach(cat => {
+                const rowC = document.createElement('div');
+                rowC.className = 'vod-row-container';
+                rowC.innerHTML = `<div class="vod-row-title">${cat} (${cats[cat].length})</div>`;
+                
+                const wrap = document.createElement('div');
+                wrap.className = 'vod-row-wrapper';
+                
+                const btnL = document.createElement('button');
+                btnL.className = 'scroll-btn scroll-left';
+                btnL.innerHTML = '&#10094;';
+
+                const track = document.createElement('div');
+                track.className = 'vod-row';
+
+                btnL.onclick = () => track.scrollBy({left: -400, behavior: 'smooth'});
+                
+                const itensExibicao = cats[cat].slice(0, 50);
+
+                itensExibicao.forEach(item => {
+                    const post = document.createElement('div');
+                    post.className = 'vod-poster';
+                    post.tabIndex = 0;
+                    post.onclick = () => playVod(item.url);
+                    post.innerHTML = `<img src="${item.logo || ''}" onerror="this.src='logo.png'"><div class="vod-poster-title">${item.name}</div>`;
+                    track.appendChild(post);
+                });
+
+                const btnR = document.createElement('button');
+                btnR.className = 'scroll-btn scroll-right';
+                btnR.innerHTML = '&#10095;';
+                btnR.onclick = () => track.scrollBy({left: 400, behavior: 'smooth'});
+
+                wrap.appendChild(btnL);
+                wrap.appendChild(track);
+                wrap.appendChild(btnR);
+                rowC.appendChild(wrap);
+                fragment.appendChild(rowC);
+            });
+
+            container.appendChild(fragment);
+        }
+
+        function carregarMaisVod() {
+            limiteCategorias += 8;
+            montarTelaVodFast();
+        }
+
+        function carregarViewAll() {
+            const cats = tipoVodAtual === 'filmes' ? cacheCategoriasFilmes : cacheCategoriasSeries;
+            limiteCategorias = Object.keys(cats).length;
+            montarTelaVodFast();
+        }
+
+        function playVod(url) {
+            const modal = document.getElementById('vodPlayerModal');
+            const video = document.getElementById('videoVod');
+            modal.classList.add('active');
+
+            video.pause();
+            video.removeAttribute('src');
+            video.load();
+
+            const isHLS = url.includes('.m3u8');
+
+            if (isHLS && Hls.isSupported()) {
+                hlsVod.destroy();
+                hlsVod = new Hls();
+                hlsVod.loadSource(url);
+                hlsVod.attachMedia(video);
+                hlsVod.on(Hls.Events.MANIFEST_PARSED, () => {
+                    video.play().catch(err => console.log("Erro de autoplay VOD:", err));
+                });
+                hlsVod.on(Hls.Events.ERROR, (event, data) => {
+                    if (data.fatal) {
+                        alert("Não foi possível carregar a mídia. Verifique a URL do servidor.");
+                    }
+                });
+            } else {
+                hlsVod.destroy();
+                video.src = url;
+                video.play().catch(err => {
+                    console.log("Erro de reprodução direta VOD:", err);
+                });
+            }
+        }
+
+        function fecharVodPlayer() {
+            const modal = document.getElementById('vodPlayerModal');
+            const video = document.getElementById('videoVod');
+            hlsVod.destroy();
+            video.pause();
+            video.removeAttribute('src');
+            video.load();
+            modal.classList.remove('active');
+        }
+
+        // Suporte a Teclado / Controle Remoto de TV
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape' || e.key === 'BackSpace') {
+                if (document.getElementById('vodPlayerModal').classList.contains('active')) {
+                    fecharVodPlayer();
+                } else if (document.getElementById('modalConfig').classList.contains('active')) {
+                    fecharModalConfig();
+                } else {
+                    voltarHome();
+                }
+            }
+        });
+    </script>
+</body>
+</html>
