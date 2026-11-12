@@ -1,17 +1,13 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-    <!-- Configurações de codificação e responsividade para dispositivos móveis e TV Box -->
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <meta name="mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <title>MilPlay v2.4</title>
-    <!-- Importação da biblioteca HLS.js para reprodução de streams de vídeo compatíveis -->
     <script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
-    
     <style>
-        /* Definição de Variáveis de Cores e Estilos Globais */
         :root {
             --bg-dark: #030b1c;
             --blue-main: #0258d8;
@@ -21,7 +17,6 @@
             --border-focus: #ffffff;
         }
 
-        /* Resets universais para padronizar margens, fontes e evitar seleções indesejadas */
         * {
             box-sizing: border-box;
             margin: 0;
@@ -30,7 +25,6 @@
             user-select: none;
         }
 
-        /* Estilização do Corpo da Página com fundo radial azul profundo */
         body {
             background-color: var(--bg-dark);
             background: radial-gradient(circle at 75% 35%, #07398a 0%, #031947 55%, #020c24 100%);
@@ -45,7 +39,7 @@
             position: relative;
         }
 
-        /* Efeitos Visuais de Fundo (Mosaico de Pôsteres + Feixes Neon) */
+        /* Efeitos de Fundo */
         .bg-wall-effect {
             position: fixed;
             inset: 0;
@@ -55,12 +49,10 @@
             display: none;
         }
 
-        /* Exibe o fundo decorativo apenas na tela principal (Home) */
         body:not(.em-subtela) .bg-wall-effect {
             display: block;
         }
 
-        /* Mosaico lateral inclinado */
         .poster-mosaic {
             position: absolute;
             top: -15%;
@@ -85,7 +77,6 @@
         .mosaic-tile:nth-child(odd) { background: linear-gradient(160deg, #0369a1, #090d16); }
         .mosaic-tile:nth-child(3n) { background: linear-gradient(160deg, #1d4ed8, #020617); }
 
-        /* Feixes de luz diagonais brilhantes */
         .neon-beam-left {
             position: absolute;
             top: -20%;
@@ -109,7 +100,7 @@
             box-shadow: 0 0 30px 6px rgba(14, 165, 233, 0.45);
         }
 
-        /* Zonas de acionamento (Hotspots) para exibir o botão Voltar ao passar o mouse nas bordas */
+        /* Zonas Hotspot do Botão Voltar */
         .back-trigger-zone {
             position: fixed;
             top: 0;
@@ -141,7 +132,6 @@
         .btn-voltar-left { left: 30px; }
         .btn-voltar-right { right: 30px; }
 
-        /* Comportamento de hover para revelar os botões de voltar nas subtelas */
         body.em-subtela .back-trigger-left:hover ~ .btn-voltar-left,
         body.em-subtela .btn-voltar-left:hover,
         body.em-subtela .btn-voltar-left:active {
@@ -156,7 +146,7 @@
             pointer-events: auto;
         }
 
-        /* Gerenciador de Telas (Views) */
+        /* Views */
         .view {
             display: none;
             width: 100%;
@@ -169,31 +159,34 @@
         }
         .view.active { display: flex; }
 
-        /* Container do Logotipo no Topo (Com efeito de pílula em vidro fosco) */
+        /* Top Logo Container: Sem fundo, centralizado acima dos cards e com mais espaçamento superior */
         .top-logo {
-            display: none;
+            display: flex;
             position: fixed;
-            top: 20px;
+            top: 35px;
             left: 50%;
             transform: translateX(-50%);
             align-items: center;
             justify-content: center;
             z-index: 1500;
-            position: absolute;
-            top: 3vh;
-            display: flex;
-            align-items: center;
-            justify-content: center;
+            background: transparent;
+            padding: 0;
+            border: none;
+            box-shadow: none;
+            backdrop-filter: none;
+            -webkit-backdrop-filter: none;
+        }
+        
+        /* Oculta o logo automaticamente quando o corpo estiver em qualquer subtela (Canais, Filmes ou Séries) */
+        body.em-subtela .top-logo {
+            display: none !important;
+        }
 
-        }
-        #homeView.active ~ .top-logo {
-            display: flex;
-        }
         .top-logo img {
-            max-height: 190px;
+            max-height: 140px;
+            max-width: 420px;
             object-fit: contain;
-            filter: drop-shadow(0 4px 10px rgba(0,0,0,0.6));
-
+            filter: drop-shadow(0 4px 12px rgba(0, 0, 0, 0.7)) drop-shadow(0 0 15px rgba(56, 189, 248, 0.6));
         }
         .brand-text {
             font-size: 2.2rem;
@@ -203,7 +196,7 @@
         }
         .brand-text span { color: #60a5fa; }
 
-        /* Grid do Dashboard Principal */
+        /* Dashboard Layout */
         .dashboard-container {
             display: grid;
             grid-template-columns: 2.15fr 2.25fr 1.65fr;
@@ -213,10 +206,9 @@
             height: 46vh;
             max-height: 410px;
             align-items: stretch;
-            margin-top: 55px;
+            margin-top: 75px;
         }
 
-        /* Estilização dos Cards do Menu */
         .card-main-live {
             background: var(--blue-card);
             border: 1.5px solid var(--border-subtle);
@@ -291,7 +283,6 @@
             height: 100%;
         }
 
-        /* Efeito de foco e hover nos cards (Borda branca brilhante e zoom) */
         .card-main-live:hover, .ib-card:hover, .ib-card-row:hover,
         .card-main-live:focus, .ib-card:focus, .ib-card-row:focus {
             background: var(--blue-card-hover);
@@ -307,7 +298,6 @@
             background: rgba(255, 255, 255, 0.18);
         }
 
-        /* Estilização dos ícones SVG line-art */
         .svg-outline {
             stroke: #ffffff;
             fill: none;
@@ -332,7 +322,7 @@
             font-weight: 700;
         }
 
-        /* Badge de Vencimento no Canto Inferior Esquerdo */
+        /* Vencimento no Canto Inferior Esquerdo */
         .expiry-badge {
             display: none;
             position: fixed;
@@ -348,7 +338,7 @@
         .expiry-badge span { color: #38bdf8; margin-left: 4px; }
         #homeView.active ~ .expiry-badge { display: block; }
 
-        /* Rodapé com Informações de Copyright e WhatsApp */
+        /* Rodapé Direita */
         .footer-copyright {
             display: none;
             position: fixed;
@@ -369,7 +359,7 @@
         #homeView.active ~ .footer-copyright { display: flex; }
         .whatsapp-icon { width: 16px; height: 16px; fill: #25D366; }
 
-        /* Janelas Modais (Configurações e Senhas) */
+        /* Modais e Subtelas */
         .modal-overlay {
             position: fixed; top: 0; left: 0; right: 0; bottom: 0;
             background: rgba(2, 12, 36, 0.88); backdrop-filter: blur(8px); display: none; align-items: center; justify-content: center; z-index: 2000;
@@ -391,7 +381,7 @@
         .btn-primary { background: #0b69eb; color: #fff; border: 1px solid rgba(255,255,255,0.4); }
         .btn-secondary { background: #1e293b; color: #fff; }
 
-        /* Layout da Tela de TV ao Vivo */
+        /* Live TV View */
         #liveView { flex-direction: row; background: #020c24; }
         .live-sidebar {
             width: 380px; background: #03153a; border-right: 1px solid rgba(56, 189, 248, 0.25);
@@ -414,7 +404,7 @@
         .live-player-area { flex: 1; background: #000; display: flex; align-items: center; justify-content: center; height: 100vh; position: relative; }
         .live-player-area video { width: 100%; height: 100%; }
 
-        /* Layout da Tela VOD (Filmes e Séries) */
+        /* VOD View */
         #vodView {
             justify-content: flex-start;
             padding: 60px 50px 40px 50px;
@@ -469,7 +459,6 @@
         }
         .btn-load-more:hover { border-color: #ffffff; box-shadow: 0 0 20px rgba(56, 189, 248, 0.7); }
 
-        /* Modal Player de Vídeo VOD */
         #vodPlayerModal {
             position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: #000; z-index: 3000; display: none; align-items: center; justify-content: center;
         }
@@ -481,7 +470,6 @@
             background: #0b69eb; color: #fff; border: 2px solid #fff; padding: 10px 20px; border-radius: 8px; font-weight: bold; cursor: pointer;
         }
 
-        /* Overlay de Carregamento (Loading) */
         .loading-overlay {
             position: fixed; top: 0; left: 0; right: 0; bottom: 0;
             background: rgba(2, 12, 36, 0.95); display: none; flex-direction: column; align-items: center; justify-content: center; z-index: 4000; gap: 15px;
@@ -492,7 +480,6 @@
         @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
         .loading-text { color: #e0f2fe; font-size: 1.1rem; font-weight: 500; }
 
-        /* Aviso de Orientação de Tela para Dispositivos Móveis */
         #landscapeWarning {
             position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: #020c24; z-index: 99999; display: none;
             flex-direction: column; align-items: center; justify-content: center; text-align: center; padding: 20px;
@@ -504,8 +491,8 @@
 
         @media (max-width: 1024px) and (orientation: portrait) { #landscapeWarning { display: flex; } }
         @media (max-width: 1024px) and (orientation: landscape) {
-            .dashboard-container { width: 92vw; height: 62vh; gap: 12px; margin-top: 35px; }
-            .top-logo img { max-height: 55px; }
+            .dashboard-container { width: 92vw; height: 62vh; gap: 12px; margin-top: 55px; }
+            .top-logo img { max-height: 100px; }
             .live-icon-circle { width: 72px; height: 72px; }
             .card-title-lg { font-size: 1.25rem; }
             .card-title { font-size: 0.9rem; }
@@ -514,7 +501,7 @@
 </head>
 <body onclick="tentarTelaCheia()">
 
-    <!-- Fundo Decorativo com Mosaico e Feixes -->
+    <!-- Fundo Decorativo -->
     <div class="bg-wall-effect">
         <div class="poster-mosaic">
             <div class="mosaic-tile"></div><div class="mosaic-tile"></div><div class="mosaic-tile"></div>
@@ -526,20 +513,20 @@
         <div class="neon-beam-right"></div>
     </div>
 
-    <!-- Alerta visual solicitando rotação para modo paisagem em celulares -->
+    <!-- Aviso de Orientação Mobile -->
     <div id="landscapeWarning">
         <svg viewBox="0 0 24 24"><path d="M16 1H8C6.9 1 6 1.9 6 3v18c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-3V3c0-1.1-.9-2-2-2zm0 18H8V5h8v14z"/></svg>
         <h2>Gire o seu Celular</h2>
         <p>Para uma melhor experiência no MilPlay v2.4, utilize o aparelho na posição horizontal (paisagem).</p>
     </div>
 
-    <!-- Tela de Carregamento Ativa durante o processamento das listas M3U -->
+    <!-- Loading Overlay -->
     <div id="loadingOverlay" class="loading-overlay">
         <div class="loading-spinner"></div>
         <div class="loading-text" id="loadingText">Carregando lista...</div>
     </div>
 
-    <!-- Modal de Proteção por Senha para Conteúdos Adultos -->
+    <!-- Modal Senha Adulto -->
     <div id="modalSenhaAdulto" class="modal-overlay">
         <div class="modal-box" style="max-width: 380px; text-align: center;">
             <div class="modal-title">Canal Protegido</div>
@@ -554,23 +541,23 @@
         </div>
     </div>
 
-    <!-- Zonas e Botões Globais de Retorno (Voltar) -->
+    <!-- Zonas Botão Voltar -->
     <div class="back-trigger-zone back-trigger-left"></div>
     <div class="back-trigger-zone back-trigger-right"></div>
     <button type="button" id="btnVoltarLeft" class="btn-voltar-global btn-voltar-left" onclick="event.stopPropagation(); voltarHome()">‹ Voltar</button>
     <button type="button" id="btnVoltarRight" class="btn-voltar-global btn-voltar-right" onclick="event.stopPropagation(); voltarHome()">‹ Voltar</button>
 
-    <!-- Exibição do Logotipo Centralizado no Topo -->
+    <!-- Top Logo Container: Sem fundo, centralizado acima dos cards e com mais espaço do topo -->
     <div class="top-logo">
         <img id="appMainLogo" src="logo.png" alt="MilPlay v2.4" onerror="if(!this.dataset.triedRoot){this.dataset.triedRoot='1';this.src='../logo.png';}else{this.style.display='none';document.getElementById('altBrandText').style.display='block';}">
         <div id="altBrandText" class="brand-text" style="display:none;">MilPlay <span>v2.4</span></div>
     </div>
 
-    <!-- Tela Inicial (Home View) -->
+    <!-- Home View -->
     <div id="homeView" class="view active">
         <div class="dashboard-container">
             
-            <!-- Card Esquerdo: Atalho para Canais ao Vivo -->
+            <!-- Card Esquerdo: Canais ao vivo -->
             <div class="card-main-live" tabindex="0" onclick="abrirLiveTV()">
                 <div class="live-icon-circle">
                     <svg class="svg-outline ib-icon-lg" viewBox="0 0 24 24">
@@ -582,7 +569,7 @@
                 <span class="card-title card-title-lg">Canais ao vivo</span>
             </div>
 
-            <!-- Grade Central: Filmes, Séries, Favoritos e Pesquisa -->
+            <!-- Grade Central: Filmes, Séries, Favoritos, Pesquisar -->
             <div class="grid-middle">
                 <div class="ib-card" tabindex="0" onclick="abrirVOD('filmes')">
                     <svg class="svg-outline ib-icon" viewBox="0 0 24 24">
@@ -616,7 +603,7 @@
                 </div>
             </div>
 
-            <!-- Coluna Direita: Configurações, Atualizar e Conta -->
+            <!-- Coluna Direita: Configurações, Atualizar, Conta -->
             <div class="grid-right">
                 <div class="ib-card-row" tabindex="0" onclick="abrirModalConfig()">
                     <svg class="svg-outline ib-icon-sm" viewBox="0 0 24 24">
@@ -647,12 +634,12 @@
         </div>
     </div>
 
-    <!-- Badge de Vencimento -->
+    <!-- Vencimento no Canto Inferior Esquerdo -->
     <div class="expiry-badge">
         Vencimento: <span id="dataVencimento">3/10/2026</span>
     </div>
 
-    <!-- Modal de Configuração de Playlist M3U / Xtream Codes -->
+    <!-- Modal Configurações -->
     <div id="modalConfig" class="modal-overlay">
         <div class="modal-box">
             <div class="modal-title">Configurar Playlist / Servidor</div>
@@ -680,7 +667,7 @@
         </div>
     </div>
 
-    <!-- Tela de Reprodução de TV ao Vivo -->
+    <!-- Live TV View -->
     <div id="liveView" class="view">
         <div class="live-sidebar">
             <div class="search-box">
@@ -693,7 +680,7 @@
         </div>
     </div>
 
-    <!-- Tela de Conteúdo Sob Demanda (VOD: Filmes e Séries) -->
+    <!-- VOD View -->
     <div id="vodView" class="view">
         <div class="vod-header">
             <div class="vod-title" id="vodTitle">Filmes</div>
@@ -710,13 +697,13 @@
         </div>
     </div>
 
-    <!-- Modal do Player de Vídeo VOD -->
+    <!-- VOD Player Modal -->
     <div id="vodPlayerModal">
         <button class="btn-close-player" onclick="fecharVodPlayer()">✕ Fechar (ESC)</button>
         <video id="videoVod" controls autoplay></video>
     </div>
 
-    <!-- Rodapé com Autoria e Contato -->
+    <!-- Rodapé Direita -->
     <footer class="footer-copyright">
         <span>Direitos Autorais Demilson Lemos -</span>
         <svg class="whatsapp-icon" viewBox="0 0 24 24">
@@ -725,9 +712,7 @@
         <span>21 990288979</span>
     </footer>
 
-    <!-- Lógica JavaScript da Aplicação -->
     <script>
-        // Variáveis Globais de Estado e Listas
         let canaisLive = [];
         let filmesVod = [];
         let seriesVod = [];
@@ -740,7 +725,6 @@
         let hlsVod = new Hls();
         let acaoPendenteAdulto = null;
 
-        // Função para tentar ativar o modo tela cheia ao interagir com a página
         function tentarTelaCheia() {
             if (!document.fullscreenElement && document.documentElement.requestFullscreen) {
                 document.documentElement.requestFullscreen().catch(err => {
@@ -749,7 +733,6 @@
             }
         }
 
-        // Verifica se um item pertence a categorias adultas com base em palavras-chave
         function ehConteudoAdulto(item) {
             if (!item) return false;
             const textoVerificacao = ((item.group || '') + ' ' + (item.name || '')).toUpperCase();
@@ -757,7 +740,6 @@
             return termosAdultos.some(termo => textoVerificacao.includes(termo));
         }
 
-        // Intercepta abertura de conteúdos adultos para solicitar senha PIN (0000)
         function solicitarSenhaAdultoSeNecessario(item, acaoProsseguir) {
             if (ehConteudoAdulto(item)) {
                 acaoPendenteAdulto = acaoProsseguir;
@@ -789,7 +771,6 @@
             }
         }
 
-        // Alterna entre as telas principais e subtelas do aplicativo
         function alternarView(viewId) {
             document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
             document.getElementById(viewId).classList.add('active');
@@ -806,7 +787,6 @@
 
         function voltarHome() { alternarView('homeView'); }
 
-        // Gerenciamento do Modal de Configurações
         function abrirModalConfig() {
             document.getElementById('modalConfig').classList.add('active');
             document.getElementById('cfgM3u').value = localStorage.getItem('m3u_url') || '';
@@ -842,7 +822,6 @@
             carregarPlaylistEExecutar(() => alternarView('homeView'));
         }
 
-        // Obtém a URL configurada ou utiliza a padrão de fallback
         function obterUrlAlvo() {
             const m3u = localStorage.getItem('m3u_url');
             if (m3u) return m3u;
@@ -856,7 +835,6 @@
             return 'https://gist.githubusercontent.com/sempreconceito/267043c96ac39ed5b1b9f3680b91974a/raw/f7cb4d3a34fb734cbec7a1c313822cd5aab72da9/CANAISJOABE.M3U';
         }
 
-        // Carrega e processa a playlist remota ou via cache local
         async function carregarPlaylistEExecutar(callback) {
             if (playlistCarregada) {
                 if (callback) callback();
@@ -904,7 +882,6 @@
             }
         }
 
-        // Parser do formato M3U para separar canais ao vivo, filmes e séries
         function processarM3U(content, callback) {
             document.getElementById('loadingText').innerText = 'Processando canais, filmes e séries...';
             setTimeout(() => {
@@ -963,7 +940,6 @@
             }, 10);
         }
 
-        // Indexa os itens em categorias para exibição estruturada
         function indexarCategorias() {
             cacheCategoriasFilmes = {};
             for (let i = 0; i < filmesVod.length; i++) {
@@ -980,7 +956,6 @@
             }
         }
 
-        // Inicializa a interface de TV ao Vivo
         function abrirLiveTV() {
             carregarPlaylistEExecutar(() => {
                 alternarView('liveView');
@@ -1027,7 +1002,6 @@
             renderizarListaLive(res);
         }
 
-        // Executa o stream de vídeo ao vivo utilizando HLS.js ou player nativo
         function playLive(url) {
             const video = document.getElementById('videoLive');
             if (Hls.isSupported()) {
@@ -1042,7 +1016,6 @@
             }
         }
 
-        // Inicializa a interface VOD (Filmes / Séries)
         function abrirVOD(tipo, focarBusca = false) {
             carregarPlaylistEExecutar(() => {
                 tipoVodAtual = tipo;
@@ -1062,7 +1035,6 @@
             abrirVOD('filmes', true);
         }
 
-        // Montagem rápida das linhas e cartazes de VOD com paginação por categoria
         function montarTelaVodFast(filtroTermo = '') {
             const container = document.getElementById('vodContainer');
             container.innerHTML = '';
@@ -1163,7 +1135,6 @@
             montarTelaVodFast(termo);
         }
 
-        // Executa a reprodução de filmes ou episódios de séries no modal player
         function playVod(url) {
             const modal = document.getElementById('vodPlayerModal');
             const video = document.getElementById('videoVod');
@@ -1207,7 +1178,6 @@
             modal.classList.remove('active');
         }
 
-        // Listener global de teclado (Teclas ESC ou BackSpace retornam à Home ou fecham modais)
         document.addEventListener('keydown', (e) => {
             if (e.key === 'Escape' || e.key === 'BackSpace') {
                 if (document.getElementById('modalSenhaAdulto').classList.contains('active')) {
