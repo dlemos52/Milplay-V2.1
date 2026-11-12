@@ -1,33 +1,40 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
+    <!-- Configurações de codificação e responsividade para dispositivos móveis e TV Box -->
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <meta name="mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-capable" content="yes">
-    <title>MilPlay V2.2</title>
+    <title>MilPlay v2.4</title>
+    <!-- Importação da biblioteca HLS.js para reprodução de streams de vídeo compatíveis -->
     <script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
+    
     <style>
+        /* Definição de Variáveis de Cores e Estilos Globais */
         :root {
-            --bg-color: #0c080d;
-            --primary-red: #800e13;
-            --card-bg: #5c090c;
-            --card-hover: #b31217;
-            --focus-outline: #ffffff;
+            --bg-dark: #030b1c;
+            --blue-main: #0258d8;
+            --blue-card: linear-gradient(145deg, #0b69eb 0%, #0346b5 100%);
+            --blue-card-hover: linear-gradient(145deg, #1b7eff 0%, #0555d6 100%);
+            --border-subtle: rgba(110, 178, 255, 0.35);
+            --border-focus: #ffffff;
         }
 
+        /* Resets universais para padronizar margens, fontes e evitar seleções indesejadas */
         * {
             box-sizing: border-box;
             margin: 0;
             padding: 0;
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            font-family: 'Segoe UI', Roboto, Tahoma, Geneva, Verdana, sans-serif;
             user-select: none;
         }
 
+        /* Estilização do Corpo da Página com fundo radial azul profundo */
         body {
-            background-color: var(--bg-color);
-            background: radial-gradient(circle at center, #260307 0%, #0c080d 100%);
-            color: #f8fafc;
+            background-color: var(--bg-dark);
+            background: radial-gradient(circle at 75% 35%, #07398a 0%, #031947 55%, #020c24 100%);
+            color: #ffffff;
             height: 100vh;
             width: 100vw;
             overflow: hidden;
@@ -38,13 +45,77 @@
             position: relative;
         }
 
-        /* Zonas Hotspot do Botão Voltar (Canto Superior Esquerdo e Direito) */
+        /* Efeitos Visuais de Fundo (Mosaico de Pôsteres + Feixes Neon) */
+        .bg-wall-effect {
+            position: fixed;
+            inset: 0;
+            z-index: 0;
+            pointer-events: none;
+            overflow: hidden;
+            display: none;
+        }
+
+        /* Exibe o fundo decorativo apenas na tela principal (Home) */
+        body:not(.em-subtela) .bg-wall-effect {
+            display: block;
+        }
+
+        /* Mosaico lateral inclinado */
+        .poster-mosaic {
+            position: absolute;
+            top: -15%;
+            left: -6%;
+            width: 34%;
+            height: 135%;
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 10px;
+            transform: rotate(13deg);
+            opacity: 0.28;
+            mask-image: linear-gradient(to right, rgba(0,0,0,1) 35%, rgba(0,0,0,0) 100%);
+            -webkit-mask-image: linear-gradient(to right, rgba(0,0,0,1) 35%, rgba(0,0,0,0) 100%);
+        }
+
+        .mosaic-tile {
+            border-radius: 6px;
+            background: linear-gradient(160deg, #1e3a8a, #0f172a);
+            border: 1px solid rgba(96, 165, 250, 0.3);
+            box-shadow: inset 0 0 15px rgba(2, 132, 199, 0.4);
+        }
+        .mosaic-tile:nth-child(odd) { background: linear-gradient(160deg, #0369a1, #090d16); }
+        .mosaic-tile:nth-child(3n) { background: linear-gradient(160deg, #1d4ed8, #020617); }
+
+        /* Feixes de luz diagonais brilhantes */
+        .neon-beam-left {
+            position: absolute;
+            top: -20%;
+            left: 22%;
+            width: 3px;
+            height: 150%;
+            background: linear-gradient(to bottom, transparent, #38bdf8, #ffffff, #38bdf8, transparent);
+            transform: rotate(22deg);
+            box-shadow: 0 0 25px 4px rgba(56, 189, 248, 0.85);
+            opacity: 0.85;
+        }
+
+        .neon-beam-right {
+            position: absolute;
+            top: -10%;
+            right: 12%;
+            width: 2px;
+            height: 140%;
+            background: linear-gradient(to bottom, transparent, rgba(56, 189, 248, 0.7), transparent);
+            transform: rotate(28deg);
+            box-shadow: 0 0 30px 6px rgba(14, 165, 233, 0.45);
+        }
+
+        /* Zonas de acionamento (Hotspots) para exibir o botão Voltar ao passar o mouse nas bordas */
         .back-trigger-zone {
             position: fixed;
             top: 0;
             width: 150px;
             height: 80px;
-            z-index: 999;
+            z-index: 2400;
         }
         .back-trigger-left { left: 0; }
         .back-trigger-right { right: 0; }
@@ -53,44 +124,39 @@
             position: fixed;
             top: 20px;
             z-index: 2500;
-            background: rgba(179, 18, 23, 0.9);
+            background: #0b69eb;
             color: #fff;
-            border: 2px solid rgba(255,255,255,0.4);
+            border: 2px solid #ffffff;
             padding: 10px 22px;
-            border-radius: 8px;
+            border-radius: 10px;
             cursor: pointer;
             font-weight: bold;
             font-size: 1rem;
             opacity: 0;
             pointer-events: none;
             transition: opacity 0.3s ease, transform 0.2s;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.5);
+            box-shadow: 0 0 18px rgba(56, 189, 248, 0.7);
         }
 
         .btn-voltar-left { left: 30px; }
         .btn-voltar-right { right: 30px; }
 
-        /* Exibe e ativa o botão Voltar sempre que estiver fora da Home */
-        body.em-subtela .btn-voltar-global {
-            opacity: 0.85;
-            pointer-events: auto;
-        }
-
-        .back-trigger-left:hover ~ .btn-voltar-left,
-        .btn-voltar-left:hover,
+        /* Comportamento de hover para revelar os botões de voltar nas subtelas */
+        body.em-subtela .back-trigger-left:hover ~ .btn-voltar-left,
+        body.em-subtela .btn-voltar-left:hover,
         body.em-subtela .btn-voltar-left:active {
             opacity: 1;
             pointer-events: auto;
         }
 
-        .back-trigger-right:hover ~ .btn-voltar-right,
-        .btn-voltar-right:hover,
+        body.em-subtela .back-trigger-right:hover ~ .btn-voltar-right,
+        body.em-subtela .btn-voltar-right:hover,
         body.em-subtela .btn-voltar-right:active {
             opacity: 1;
             pointer-events: auto;
         }
 
-        /* Views */
+        /* Gerenciador de Telas (Views) */
         .view {
             display: none;
             width: 100%;
@@ -98,378 +164,386 @@
             flex-direction: column;
             align-items: center;
             justify-content: center;
+            position: relative;
+            z-index: 10;
         }
         .view.active { display: flex; }
 
-        /* Top Logo Container */
+        /* Container do Logotipo no Topo (Com efeito de pílula em vidro fosco) */
         .top-logo {
+            display: none;
+            position: fixed;
+            top: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            align-items: center;
+            justify-content: center;
+            z-index: 1500;
             position: absolute;
             top: 3vh;
             display: flex;
             align-items: center;
             justify-content: center;
+
+        }
+        #homeView.active ~ .top-logo {
+            display: flex;
         }
         .top-logo img {
-            max-height: 110px;
+            max-height: 190px;
             object-fit: contain;
             filter: drop-shadow(0 4px 10px rgba(0,0,0,0.6));
+
         }
         .brand-text {
-            font-size: 2.8rem;
+            font-size: 2.2rem;
             font-weight: 800;
             letter-spacing: 1px;
             color: #ffffff;
         }
-        .brand-text span { color: #e50914; }
+        .brand-text span { color: #60a5fa; }
 
-        /* Dashboard estilo IB Player */
+        /* Grid do Dashboard Principal */
         .dashboard-container {
             display: grid;
-            grid-template-columns: 2.2fr 1.8fr 1.6fr;
-            gap: 25px;
-            width: 85vw;
-            max-width: 1250px;
-            height: 55vh;
-            max-height: 520px;
-            align-items: center;
-            margin-top: 60px;
+            grid-template-columns: 2.15fr 2.25fr 1.65fr;
+            gap: 18px;
+            width: 84vw;
+            max-width: 1180px;
+            height: 46vh;
+            max-height: 410px;
+            align-items: stretch;
+            margin-top: 55px;
         }
 
+        /* Estilização dos Cards do Menu */
         .card-main-live {
-            background: linear-gradient(145deg, #7a0c11, #400508);
-            border: 3px solid rgba(255,255,255,0.2);
-            border-radius: 12px;
+            background: var(--blue-card);
+            border: 1.5px solid var(--border-subtle);
+            border-radius: 14px;
             height: 100%;
             display: flex;
             flex-direction: column;
             align-items: center;
             justify-content: center;
-            gap: 20px;
+            gap: 22px;
             cursor: pointer;
-            transition: all 0.25s ease;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.7);
+            transition: all 0.25s cubic-bezier(0.25, 0.8, 0.25, 1);
+            box-shadow: 0 10px 28px rgba(0, 15, 50, 0.45), inset 0 1px 1px rgba(255, 255, 255, 0.25);
+            position: relative;
+        }
+
+        .live-icon-circle {
+            width: 112px;
+            height: 112px;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.12);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: inset 0 0 15px rgba(255, 255, 255, 0.08);
+            transition: transform 0.25s ease;
         }
 
         .grid-middle {
             display: grid;
             grid-template-columns: 1fr 1fr;
             grid-template-rows: 1fr 1fr;
-            gap: 20px;
+            gap: 16px;
             height: 100%;
         }
 
         .grid-right {
-            display: flex;
-            flex-direction: column;
-            gap: 15px;
+            display: grid;
+            grid-template-rows: 1fr 1fr 1fr;
+            gap: 16px;
             height: 100%;
-            justify-content: center;
         }
 
         .ib-card {
-            background: linear-gradient(145deg, #66090d, #330305);
-            border: 2px solid rgba(255,255,255,0.15);
-            border-radius: 10px;
+            background: var(--blue-card);
+            border: 1.5px solid var(--border-subtle);
+            border-radius: 13px;
             display: flex;
             flex-direction: column;
             align-items: center;
             justify-content: center;
             gap: 12px;
             cursor: pointer;
-            transition: all 0.2s ease;
-            box-shadow: 0 8px 20px rgba(0,0,0,0.5);
-            padding: 15px;
+            transition: all 0.25s cubic-bezier(0.25, 0.8, 0.25, 1);
+            box-shadow: 0 8px 22px rgba(0, 15, 50, 0.4), inset 0 1px 1px rgba(255, 255, 255, 0.22);
+            padding: 12px;
+            position: relative;
         }
 
         .ib-card-row {
-            background: rgba(20, 10, 15, 0.6);
-            border: 1px solid rgba(255,255,255,0.15);
-            border-radius: 8px;
+            background: var(--blue-card);
+            border: 1.5px solid var(--border-subtle);
+            border-radius: 13px;
             display: flex;
             align-items: center;
-            padding: 14px 20px;
-            gap: 15px;
+            padding: 0 22px;
+            gap: 16px;
             cursor: pointer;
-            transition: all 0.2s ease;
+            transition: all 0.25s cubic-bezier(0.25, 0.8, 0.25, 1);
+            box-shadow: 0 8px 22px rgba(0, 15, 50, 0.4), inset 0 1px 1px rgba(255, 255, 255, 0.22);
+            position: relative;
+            height: 100%;
         }
 
+        /* Efeito de foco e hover nos cards (Borda branca brilhante e zoom) */
         .card-main-live:hover, .ib-card:hover, .ib-card-row:hover,
         .card-main-live:focus, .ib-card:focus, .ib-card-row:focus {
-            transform: scale(1.04);
-            border-color: #ffffff;
-            box-shadow: 0 0 25px rgba(229, 9, 20, 0.8);
+            background: var(--blue-card-hover);
+            transform: scale(1.035);
+            border: 2.5px solid var(--border-focus);
+            box-shadow: 0 0 25px rgba(255, 255, 255, 0.55), 0 12px 30px rgba(0, 30, 90, 0.6);
             outline: none;
+            z-index: 10;
         }
 
-        .ib-icon {
-            fill: #ffffff;
-            width: 48px;
-            height: 48px;
+        .card-main-live:hover .live-icon-circle {
+            transform: scale(1.06);
+            background: rgba(255, 255, 255, 0.18);
         }
-        .ib-icon-lg {
-            width: 90px;
-            height: 90px;
+
+        /* Estilização dos ícones SVG line-art */
+        .svg-outline {
+            stroke: #ffffff;
+            fill: none;
+            stroke-width: 2;
+            stroke-linecap: round;
+            stroke-linejoin: round;
+            transition: transform 0.25s ease;
         }
-        .ib-icon-sm {
-            width: 26px;
-            height: 26px;
-        }
+
+        .ib-icon { width: 42px; height: 42px; }
+        .ib-icon-lg { width: 56px; height: 56px; }
+        .ib-icon-sm { width: 28px; height: 28px; }
 
         .card-title {
-            font-size: 1.1rem;
+            font-size: 1.05rem;
             font-weight: 700;
             color: #ffffff;
-            letter-spacing: 0.5px;
+            letter-spacing: 0.3px;
         }
         .card-title-lg {
-            font-size: 1.8rem;
+            font-size: 1.55rem;
+            font-weight: 700;
         }
 
-        /* Modal Configurações & Senha */
+        /* Badge de Vencimento no Canto Inferior Esquerdo */
+        .expiry-badge {
+            display: none;
+            position: fixed;
+            bottom: 22px;
+            left: 38px;
+            z-index: 1000;
+            font-size: 0.95rem;
+            font-weight: 700;
+            color: #ffffff;
+            text-shadow: 0 2px 6px rgba(0, 0, 0, 0.8);
+            pointer-events: none;
+        }
+        .expiry-badge span { color: #38bdf8; margin-left: 4px; }
+        #homeView.active ~ .expiry-badge { display: block; }
+
+        /* Rodapé com Informações de Copyright e WhatsApp */
+        .footer-copyright {
+            display: none;
+            position: fixed;
+            bottom: 18px;
+            right: 30px;
+            z-index: 1000;
+            align-items: center;
+            gap: 8px;
+            font-size: 0.85rem;
+            color: rgba(255, 255, 255, 0.85);
+            background: rgba(3, 25, 71, 0.65);
+            padding: 6px 14px;
+            border-radius: 20px;
+            backdrop-filter: blur(6px);
+            border: 1px solid rgba(56, 189, 248, 0.35);
+            pointer-events: none;
+        }
+        #homeView.active ~ .footer-copyright { display: flex; }
+        .whatsapp-icon { width: 16px; height: 16px; fill: #25D366; }
+
+        /* Janelas Modais (Configurações e Senhas) */
         .modal-overlay {
             position: fixed; top: 0; left: 0; right: 0; bottom: 0;
-            background: rgba(0,0,0,0.85); display: none; align-items: center; justify-content: center; z-index: 2000;
+            background: rgba(2, 12, 36, 0.88); backdrop-filter: blur(8px); display: none; align-items: center; justify-content: center; z-index: 2000;
         }
         .modal-overlay.active { display: flex; }
         .modal-box {
-            background: #1e1b2e; border: 1px solid #e50914; padding: 30px; border-radius: 12px;
-            width: 100%; max-width: 450px; box-shadow: 0 20px 40px rgba(0,0,0,0.8);
+            background: #041d52; border: 2px solid #38bdf8; padding: 30px; border-radius: 14px;
+            width: 100%; max-width: 450px; box-shadow: 0 0 35px rgba(14, 165, 233, 0.45);
         }
-        .modal-title { font-size: 1.3rem; font-weight: bold; margin-bottom: 20px; color: #e50914; text-align: center; }
+        .modal-title { font-size: 1.3rem; font-weight: bold; margin-bottom: 20px; color: #ffffff; text-align: center; }
         .form-control { margin-bottom: 15px; }
-        .form-control label { display: block; font-size: 0.85rem; color: #cbd5e1; margin-bottom: 5px; }
+        .form-control label { display: block; font-size: 0.85rem; color: #bae6fd; margin-bottom: 5px; }
         .form-control input {
-            width: 100%; padding: 12px; border-radius: 6px; border: 1px solid #475569; background: #0f172a; color: #fff; outline: none;
+            width: 100%; padding: 12px; border-radius: 8px; border: 1px solid #1d4ed8; background: #020c24; color: #fff; outline: none;
         }
+        .form-control input:focus { border-color: #ffffff; box-shadow: 0 0 10px rgba(56, 189, 248, 0.6); }
         .modal-buttons { display: flex; gap: 10px; margin-top: 20px; }
-        .btn-action { flex: 1; padding: 12px; border-radius: 6px; border: none; font-weight: bold; cursor: pointer; }
-        .btn-primary { background: #e50914; color: #fff; }
-        .btn-secondary { background: #334155; color: #fff; }
+        .btn-action { flex: 1; padding: 12px; border-radius: 8px; border: none; font-weight: bold; cursor: pointer; }
+        .btn-primary { background: #0b69eb; color: #fff; border: 1px solid rgba(255,255,255,0.4); }
+        .btn-secondary { background: #1e293b; color: #fff; }
 
-        /* Live TV View */
-        #liveView { flex-direction: row; }
+        /* Layout da Tela de TV ao Vivo */
+        #liveView { flex-direction: row; background: #020c24; }
         .live-sidebar {
-            width: 380px; background: #110711; border-right: 1px solid rgba(255,255,255,0.1);
+            width: 380px; background: #03153a; border-right: 1px solid rgba(56, 189, 248, 0.25);
             display: flex; flex-direction: column; height: 100vh;
         }
-        .search-box { padding: 15px; background: #1e1b2e; }
+        .search-box { padding: 15px; background: #041d52; }
         .search-box input {
-            width: 100%; padding: 10px 14px; border-radius: 6px; border: 1px solid #475569; background: #0f172a; color: #fff; outline: none; font-size: 0.95rem;
+            width: 100%; padding: 10px 14px; border-radius: 8px; border: 1px solid #1d4ed8; background: #020c24; color: #fff; outline: none; font-size: 0.95rem;
         }
         .live-list { flex: 1; overflow-y: auto; list-style: none; }
         .live-item {
             display: flex; align-items: center; padding: 12px 18px; gap: 15px;
-            cursor: pointer; border-bottom: 1px solid rgba(255,255,255,0.05); transition: background 0.2s;
+            cursor: pointer; border-bottom: 1px solid rgba(255,255,255,0.06); transition: background 0.2s;
         }
-        .live-item:hover, .live-item.active, .live-item:focus { background: #7a0c11; outline: none; }
-        .live-item img { width: 40px; height: 40px; object-fit: contain; background: #000; border-radius: 4px; }
+        .live-item:hover, .live-item.active, .live-item:focus { background: #0b69eb; outline: none; }
+        .live-item img { width: 40px; height: 40px; object-fit: contain; background: #000; border-radius: 6px; }
         .live-info { display: flex; flex-direction: column; overflow: hidden; }
         .live-name { font-size: 0.95rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-weight: 600; }
-        .live-group { font-size: 0.75rem; color: #cbd5e1; margin-top: 2px; }
+        .live-group { font-size: 0.75rem; color: #bae6fd; margin-top: 2px; }
         .live-player-area { flex: 1; background: #000; display: flex; align-items: center; justify-content: center; height: 100vh; position: relative; }
         .live-player-area video { width: 100%; height: 100%; }
 
-        /* VOD View (Filmes & Séries) */
+        /* Layout da Tela VOD (Filmes e Séries) */
         #vodView {
             justify-content: flex-start;
-            padding: 80px 50px 40px 50px;
+            padding: 60px 50px 40px 50px;
             overflow-y: auto;
             height: 100vh;
+            background: radial-gradient(circle at top, #06286e 0%, #020c24 100%);
         }
         .vod-header { 
-            display: flex; 
-            justify-content: space-between; 
-            align-items: center; 
-            margin-bottom: 25px; 
-            width: 100%; 
-            border-bottom: 1px solid rgba(255,255,255,0.1);
-            padding-bottom: 15px;
+            display: flex; justify-content: space-between; align-items: center; 
+            margin-bottom: 25px; width: 100%; border-bottom: 1px solid rgba(56, 189, 248, 0.25);
+            padding-bottom: 15px; gap: 20px;
         }
-        .vod-title { font-size: 1.8rem; font-weight: bold; color: #e50914; }
-        
-        .vod-header-right {
-            display: flex;
-            align-items: center;
-            gap: 20px;
+        .vod-title { font-size: 1.8rem; font-weight: bold; color: #ffffff; white-space: nowrap; min-width: 180px; }
+        .vod-search-container { width: 320px; margin-left: auto; }
+        .vod-search-container input {
+            width: 100%; padding: 10px 14px; border-radius: 8px; border: 1px solid #1d4ed8; background: #03153a; color: #fff; outline: none; font-size: 0.95rem;
         }
         .view-all-link {
-            color: #38bdf8;
-            font-size: 1.1rem;
-            font-weight: 600;
-            cursor: pointer;
-            text-decoration: underline;
-            transition: color 0.2s;
-            padding: 8px 12px;
-            border-radius: 6px;
+            color: #7dd3fc; font-size: 1.05rem; font-weight: 600; cursor: pointer; text-decoration: underline; padding: 8px 12px; border-radius: 8px; white-space: nowrap;
         }
-        .view-all-link:hover, .view-all-link:focus { color: #7dd3fc; outline: none; background: rgba(255,255,255,0.1); }
+        .view-all-link:hover { color: #ffffff; background: rgba(11, 105, 235, 0.4); }
 
         .vod-row-container { margin-bottom: 30px; width: 100%; }
-        .vod-row-title { font-size: 1.25rem; margin-bottom: 14px; color: #e2e8f0; font-weight: bold; }
+        .vod-row-title { font-size: 1.25rem; margin-bottom: 14px; color: #e0f2fe; font-weight: bold; }
         .vod-row-wrapper { display: flex; align-items: center; position: relative; width: 100%; }
-        .vod-row {
-            display: flex; gap: 18px; overflow-x: auto; scroll-behavior: smooth; padding: 8px 4px; width: 100%; scrollbar-width: none;
-        }
+        .vod-row { display: flex; gap: 18px; overflow-x: auto; scroll-behavior: smooth; padding: 8px 4px; width: 100%; scrollbar-width: none; }
         .vod-row::-webkit-scrollbar { display: none; }
         
         .vod-poster {
-            flex: 0 0 150px; height: 225px; background: #1e1b2e; border-radius: 8px;
-            overflow: hidden; cursor: pointer; position: relative; border: 2px solid transparent; transition: all 0.2s;
+            flex: 0 0 150px; height: 225px; background: #03153a; border-radius: 10px;
+            overflow: hidden; cursor: pointer; position: relative; border: 2px solid rgba(56, 189, 248, 0.25); transition: all 0.2s;
         }
-        .vod-poster:hover, .vod-poster:focus { transform: scale(1.06); border-color: #e50914; outline: none; box-shadow: 0 0 15px rgba(229, 9, 20, 0.6); }
+        .vod-poster:hover { transform: scale(1.06); border-color: #ffffff; box-shadow: 0 0 20px rgba(56, 189, 248, 0.7); }
         .vod-poster img { width: 100%; height: 100%; object-fit: cover; }
         .vod-poster-title {
-            position: absolute; bottom: 0; left: 0; right: 0; background: rgba(0,0,0,0.85);
+            position: absolute; bottom: 0; left: 0; right: 0; background: rgba(2, 12, 36, 0.92);
             font-size: 0.8rem; padding: 8px 5px; text-align: center; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; color: #fff;
         }
 
         .scroll-btn {
-            position: absolute; z-index: 10; background: rgba(30, 27, 46, 0.95); color: #fff;
-            border: 1px solid #475569; width: 42px; height: 42px; border-radius: 50%; cursor: pointer;
+            position: absolute; z-index: 10; background: #0b69eb; color: #ffffff;
+            border: 1.5px solid #ffffff; width: 42px; height: 42px; border-radius: 50%; cursor: pointer;
             display: flex; align-items: center; justify-content: center; font-size: 1.2rem;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5);
         }
         .scroll-left { left: -20px; }
         .scroll-right { right: -20px; }
         
         .load-more-container { text-align: center; margin: 30px 0 60px 0; width: 100%; }
         .btn-load-more {
-            background: #1e1b2e; border: 2px solid #e50914; color: #fff; padding: 14px 40px; border-radius: 8px; cursor: pointer; font-weight: bold; font-size: 1.1rem; transition: all 0.2s;
+            background: #0b69eb; border: 2px solid rgba(255,255,255,0.5); color: #fff; padding: 14px 40px; border-radius: 10px; cursor: pointer; font-weight: bold; font-size: 1.1rem;
         }
-        .btn-load-more:hover, .btn-load-more:focus { background: #e50914; transform: scale(1.05); outline: none; }
+        .btn-load-more:hover { border-color: #ffffff; box-shadow: 0 0 20px rgba(56, 189, 248, 0.7); }
 
-        /* VOD Player Modal */
+        /* Modal Player de Vídeo VOD */
         #vodPlayerModal {
-            position: fixed; top: 0; left: 0; right: 0; bottom: 0;
-            background: #000; z-index: 3000; display: none; align-items: center; justify-content: center;
+            position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: #000; z-index: 3000; display: none; align-items: center; justify-content: center;
         }
         #vodPlayerModal.active { display: flex; }
         #vodPlayerModal video { width: 100%; height: 100%; }
 
         .btn-close-player {
             position: absolute; top: 25px; right: 35px; z-index: 3100;
-            background: rgba(229, 9, 20, 0.85); color: #fff; border: none;
-            padding: 10px 20px; border-radius: 6px; font-size: 1rem; font-weight: bold; cursor: pointer;
+            background: #0b69eb; color: #fff; border: 2px solid #fff; padding: 10px 20px; border-radius: 8px; font-weight: bold; cursor: pointer;
         }
 
-        /* Indicator de Loading Sob Demanda */
+        /* Overlay de Carregamento (Loading) */
         .loading-overlay {
             position: fixed; top: 0; left: 0; right: 0; bottom: 0;
-            background: rgba(12, 8, 13, 0.95); display: none; flex-direction: column;
-            align-items: center; justify-content: center; z-index: 4000; gap: 15px;
-            transition: opacity 0.3s ease;
+            background: rgba(2, 12, 36, 0.95); display: none; flex-direction: column; align-items: center; justify-content: center; z-index: 4000; gap: 15px;
         }
         .loading-spinner {
-            width: 55px; height: 55px; border: 4px solid rgba(229, 9, 20, 0.2);
-            border-top: 4px solid #e50914; border-radius: 50%;
-            animation: spin 0.8s linear infinite;
+            width: 55px; height: 55px; border: 4px solid rgba(255, 255, 255, 0.2); border-top: 4px solid #38bdf8; border-radius: 50%; animation: spin 0.8s linear infinite;
         }
         @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
-        .loading-text { color: #cbd5e1; font-size: 1.1rem; font-weight: 500; letter-spacing: 0.5px; }
+        .loading-text { color: #e0f2fe; font-size: 1.1rem; font-weight: 500; }
 
-        /* Aviso de Orientação Paisagem para Celular */
+        /* Aviso de Orientação de Tela para Dispositivos Móveis */
         #landscapeWarning {
-            position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
-            background: #0c080d; z-index: 99999; display: none;
+            position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: #020c24; z-index: 99999; display: none;
             flex-direction: column; align-items: center; justify-content: center; text-align: center; padding: 20px;
         }
-        #landscapeWarning svg { width: 80px; height: 80px; fill: #e50914; animation: rotatePhone 1.5s ease-in-out infinite alternate; margin-bottom: 20px; }
+        #landscapeWarning svg { width: 80px; height: 80px; fill: #38bdf8; animation: rotatePhone 1.5s ease-in-out infinite alternate; margin-bottom: 20px; }
         @keyframes rotatePhone { 0% { transform: rotate(0deg); } 100% { transform: rotate(90deg); } }
         #landscapeWarning h2 { color: #fff; font-size: 1.5rem; margin-bottom: 10px; }
-        #landscapeWarning p { color: #cbd5e1; font-size: 1rem; }
+        #landscapeWarning p { color: #bae6fd; font-size: 1rem; }
 
-        /* Rodapé Direita - Oculto por padrão, aparece apenas na Home */
-        .footer-copyright {
-            display: none;
-            position: fixed;
-            bottom: 15px;
-            right: 25px;
-            z-index: 1000;
-            align-items: center;
-            gap: 8px;
-            font-size: 0.85rem;
-            color: rgba(255, 255, 255, 0.7);
-            background: rgba(0, 0, 0, 0.4);
-            padding: 6px 14px;
-            border-radius: 20px;
-            backdrop-filter: blur(4px);
-            border: 1px solid rgba(255, 255, 255, 0.05);
-            pointer-events: none;
-        }
-
-        #homeView.active ~ .footer-copyright {
-            display: flex;
-        }
-
-        .whatsapp-icon {
-            width: 16px;
-            height: 16px;
-            fill: #25D366;
-        }
-
-        /* Ajustes Responsivos Específicos para Mobile Landscape / Viewports Reduzidos */
-        @media (max-width: 1024px) and (orientation: portrait) {
-            #landscapeWarning { display: flex; }
-        }
-
+        @media (max-width: 1024px) and (orientation: portrait) { #landscapeWarning { display: flex; } }
         @media (max-width: 1024px) and (orientation: landscape) {
-            .dashboard-container {
-                width: 95vw;
-                max-width: none;
-                height: 70vh;
-                gap: 15px;
-                margin-top: 40px;
-            }
-            .top-logo img { max-height: 70px; }
-            .card-title-lg { font-size: 1.4rem; }
-            .card-title { font-size: 0.95rem; }
-            .ib-icon-lg { width: 60px; height: 60px; }
-            .ib-icon { width: 32px; height: 32px; }
-            .ib-card, .ib-card-row { padding: 10px; gap: 8px; }
-            #vodView { padding: 60px 20px 20px 20px; }
-            .vod-poster { flex: 0 0 120px; height: 180px; }
-            .btn-voltar-global {
-                top: 10px;
-                padding: 8px 16px;
-                font-size: 0.9rem;
-            }
-            .btn-voltar-left { left: 15px; }
-            .btn-voltar-right { right: 15px; }
-        }
-
-        @media (min-width: 1920px) {
-            .dashboard-container { max-width: 1500px; height: 60vh; }
-            .top-logo img { max-height: 135px; }
-            .card-title { font-size: 1.3rem; }
-            .card-title-lg { font-size: 2.2rem; }
-            .ib-icon { width: 56px; height: 56px; }
-            .ib-icon-lg { width: 110px; height: 110px; }
-            .vod-poster { flex: 0 0 180px; height: 270px; }
-            .footer-copyright { font-size: 0.95rem; bottom: 20px; right: 35px; }
+            .dashboard-container { width: 92vw; height: 62vh; gap: 12px; margin-top: 35px; }
+            .top-logo img { max-height: 55px; }
+            .live-icon-circle { width: 72px; height: 72px; }
+            .card-title-lg { font-size: 1.25rem; }
+            .card-title { font-size: 0.9rem; }
         }
     </style>
 </head>
 <body onclick="tentarTelaCheia()">
 
-    <!-- Aviso de Orientação para Celular -->
-    <div id="landscapeWarning">
-        <svg viewBox="0 0 24 24">
-            <path d="M16 1H8C6.9 1 6 1.9 6 3v18c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-3V3c0-1.1-.9-2-2-2zm0 18H8V5h8v14z"/>
-        </svg>
-        <h2>Gire o seu Celular</h2>
-        <p>Para uma melhor experiência no MilPlay V2.2, por favor, utilize o aparelho na posição horizontal (paisagem).</p>
+    <!-- Fundo Decorativo com Mosaico e Feixes -->
+    <div class="bg-wall-effect">
+        <div class="poster-mosaic">
+            <div class="mosaic-tile"></div><div class="mosaic-tile"></div><div class="mosaic-tile"></div>
+            <div class="mosaic-tile"></div><div class="mosaic-tile"></div><div class="mosaic-tile"></div>
+            <div class="mosaic-tile"></div><div class="mosaic-tile"></div><div class="mosaic-tile"></div>
+            <div class="mosaic-tile"></div><div class="mosaic-tile"></div><div class="mosaic-tile"></div>
+        </div>
+        <div class="neon-beam-left"></div>
+        <div class="neon-beam-right"></div>
     </div>
 
-    <!-- Loading Overlay -->
+    <!-- Alerta visual solicitando rotação para modo paisagem em celulares -->
+    <div id="landscapeWarning">
+        <svg viewBox="0 0 24 24"><path d="M16 1H8C6.9 1 6 1.9 6 3v18c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-3V3c0-1.1-.9-2-2-2zm0 18H8V5h8v14z"/></svg>
+        <h2>Gire o seu Celular</h2>
+        <p>Para uma melhor experiência no MilPlay v2.4, utilize o aparelho na posição horizontal (paisagem).</p>
+    </div>
+
+    <!-- Tela de Carregamento Ativa durante o processamento das listas M3U -->
     <div id="loadingOverlay" class="loading-overlay">
         <div class="loading-spinner"></div>
         <div class="loading-text" id="loadingText">Carregando lista...</div>
     </div>
 
-    <!-- Modal de Senha para Conteúdo Adulto -->
+    <!-- Modal de Proteção por Senha para Conteúdos Adultos -->
     <div id="modalSenhaAdulto" class="modal-overlay">
         <div class="modal-box" style="max-width: 380px; text-align: center;">
             <div class="modal-title">Canal Protegido</div>
-            <p style="color: #cbd5e1; font-size: 0.9rem; margin-bottom: 15px;">Digite a senha padrão (0000) para acessar os canais adultos.</p>
+            <p style="color: #bae6fd; font-size: 0.9rem; margin-bottom: 15px;">Digite a senha padrão (0000) para acessar.</p>
             <div class="form-control">
                 <input type="password" id="inputSenhaAdulto" placeholder="Senha (0000)" maxlength="4" style="text-align: center; font-size: 1.2rem; letter-spacing: 4px;">
             </div>
@@ -480,90 +554,105 @@
         </div>
     </div>
 
-    <!-- Zonas de detecção de mouse para botões Voltar ocultos -->
+    <!-- Zonas e Botões Globais de Retorno (Voltar) -->
     <div class="back-trigger-zone back-trigger-left"></div>
     <div class="back-trigger-zone back-trigger-right"></div>
-
     <button type="button" id="btnVoltarLeft" class="btn-voltar-global btn-voltar-left" onclick="event.stopPropagation(); voltarHome()">‹ Voltar</button>
     <button type="button" id="btnVoltarRight" class="btn-voltar-global btn-voltar-right" onclick="event.stopPropagation(); voltarHome()">‹ Voltar</button>
 
-    <!-- Top Logo Container -->
+    <!-- Exibição do Logotipo Centralizado no Topo -->
     <div class="top-logo">
-        <img src="logo.png" alt="MilPlay v2.2 Logo" onerror="this.style.display='none'; document.getElementById('altBrandText').style.display='block';">
-        <div id="altBrandText" class="brand-text" style="display:none;">MilPlay <span>V2.2</span></div>
+        <img id="appMainLogo" src="logo.png" alt="MilPlay v2.4" onerror="if(!this.dataset.triedRoot){this.dataset.triedRoot='1';this.src='../logo.png';}else{this.style.display='none';document.getElementById('altBrandText').style.display='block';}">
+        <div id="altBrandText" class="brand-text" style="display:none;">MilPlay <span>v2.4</span></div>
     </div>
 
-    <!-- Home View (Estilo Imagem 2 - IB Player) -->
+    <!-- Tela Inicial (Home View) -->
     <div id="homeView" class="view active">
         <div class="dashboard-container">
             
-            <!-- Card Principal: Live TV (Esquerda) -->
+            <!-- Card Esquerdo: Atalho para Canais ao Vivo -->
             <div class="card-main-live" tabindex="0" onclick="abrirLiveTV()">
-                <svg class="ib-icon ib-icon-lg" viewBox="0 0 24 24">
-                    <path d="M21 3H3c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h5v2h8v-2h5c1.1 0 1.99-.9 1.99-2L23 5c0-1.1-.9-2-2-2zm0 14H3V5h18v12zm-11-7l6 3.5-6 3.5V10z"/>
-                </svg>
-                <span class="card-title card-title-lg">Live TV</span>
+                <div class="live-icon-circle">
+                    <svg class="svg-outline ib-icon-lg" viewBox="0 0 24 24">
+                        <rect x="2" y="7" width="20" height="14" rx="2" ry="2"></rect>
+                        <polyline points="17 2 12 7 7 2"></polyline>
+                        <text x="12" y="16.5" text-anchor="middle" fill="#ffffff" stroke="none" font-size="7.5" font-weight="800">TV</text>
+                    </svg>
+                </div>
+                <span class="card-title card-title-lg">Canais ao vivo</span>
             </div>
 
-            <!-- Grade Central: Filmes, Séries, Conta, Servidor -->
+            <!-- Grade Central: Filmes, Séries, Favoritos e Pesquisa -->
             <div class="grid-middle">
                 <div class="ib-card" tabindex="0" onclick="abrirVOD('filmes')">
-                    <svg class="ib-icon" viewBox="0 0 24 24">
-                        <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 14.5v-9l6 4.5-6 4.5z"/>
+                    <svg class="svg-outline ib-icon" viewBox="0 0 24 24">
+                        <rect x="2" y="6" width="14" height="12" rx="2" ry="2"></rect>
+                        <polygon points="22 8 16 12 22 16 22 8"></polygon>
                     </svg>
-                    <span class="card-title">Movies</span>
+                    <span class="card-title">Filmes</span>
                 </div>
 
                 <div class="ib-card" tabindex="0" onclick="abrirVOD('series')">
-                    <svg class="ib-icon" viewBox="0 0 24 24">
-                        <path d="M18 4l2 4h-3l-2-4h-2l2 4h-3l-2-4H8l2 4H7L5 4H4c-1.1 0-1.99.9-1.99 2L2 18c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V4h-4z"/>
+                    <svg class="svg-outline ib-icon" viewBox="0 0 24 24">
+                        <rect x="3" y="3" width="18" height="18" rx="3" ry="3"></rect>
+                        <polygon points="10 8 16 12 10 16 10 8"></polygon>
                     </svg>
-                    <span class="card-title">Series</span>
+                    <span class="card-title">Séries</span>
                 </div>
 
-                <div class="ib-card" tabindex="0" onclick="abrirModalConfig()">
-                    <svg class="ib-icon" viewBox="0 0 24 24">
-                        <path d="M16 11c1.66 0 2.99-1.34 2.99-3S17.66 5 16 5c-1.66 0-3 1.34-3 3s1.34 3 3 3zm-8 0c1.66 0 2.99-1.34 2.99-3S9.66 5 8 5C6.34 5 5 6.34 5 8s1.34 3 3 3zm0 2c-2.33 0-7 1.17-7 3.5V19h14v-2.5c0-2.33-4.67-3.5-7-3.5zm8 0c-.29 0-.62.02-.97.05 1.16.84 1.97 1.97 1.97 3.45V19h6v-2.5c0-2.33-4.67-3.5-7-3.5z"/>
+                <div class="ib-card" tabindex="0" onclick="alert('Nenhum item adicionado aos Favoritos ainda.')">
+                    <svg class="svg-outline ib-icon" viewBox="0 0 24 24">
+                        <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path>
                     </svg>
-                    <span class="card-title">Account</span>
+                    <span class="card-title">Favoritos</span>
                 </div>
 
-                <div class="ib-card" tabindex="0" onclick="abrirModalConfig()">
-                    <svg class="ib-icon" viewBox="0 0 24 24">
-                        <path d="M12 6v3l4-4-4-4v3c-4.42 0-8 3.58-8 8 0 1.57.46 3.03 1.24 4.26L6.7 14.8C6.25 13.93 6 12.99 6 12c0-3.31 2.69-6 6-6zm6.76 1.74L17.3 9.2c.45.87.7 1.81.7 2.8 0 3.31-2.69 6-6 6v-3l-4 4 4 4v-3c4.42 0 8-3.58 8-8 0-1.57-.46-3.03-1.24-4.26z"/>
+                <div class="ib-card" tabindex="0" onclick="abrirBuscaRapida()">
+                    <svg class="svg-outline ib-icon" viewBox="0 0 24 24">
+                        <circle cx="11" cy="11" r="7"></circle>
+                        <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
                     </svg>
-                    <span class="card-title">Change Server</span>
+                    <span class="card-title">Pesquisar</span>
                 </div>
             </div>
 
-            <!-- Coluna Direita: Opções Laterais -->
+            <!-- Coluna Direita: Configurações, Atualizar e Conta -->
             <div class="grid-right">
                 <div class="ib-card-row" tabindex="0" onclick="abrirModalConfig()">
-                    <svg class="ib-icon ib-icon-sm" viewBox="0 0 24 24">
-                        <path d="M19.14 12.94c.04-.3.06-.61.06-.94 0-.32-.02-.64-.07-.94l2.03-1.58c.18-.14.23-.41.12-.61l-1.92-3.32c-.12-.22-.37-.29-.59-.22l-2.39.96c-.5-.38-1.03-.7-1.62-.94l-.36-2.54c-.04-.24-.24-.41-.48-.41h-3.84c-.24 0-.43.17-.47.41l-.36 2.54c-.59.24-1.13.57-1.62.94l-2.39-.96c-.22-.08-.47 0-.59.22L2.74 8.87c-.12.21-.08.47.12.61l2.03 1.58c-.05.3-.09.63-.09.94s.02.64.07.94l-2.03 1.58c-.18.14-.23.41-.12.61l1.92 3.32c.12.22.37.29.59.22l2.39-.96c-.5.38 1.03.7 1.62.94l.36 2.54c.05.24.24.41.48.41h3.84c.24 0 .44-.17.47-.41l.36-2.54c.59-.24 1.13-.56 1.62-.94l2.39.96c.22.08.47 0 .59-.22l1.92-3.32c.12-.22.07-.47-.12-.61l-2.01-1.58zM12 15.6c-1.98 0-3.6-1.62-3.6-3.6s1.62-3.6 3.6-3.6 3.6 1.62 3.6 3.6-1.62 3.6-3.6-3.6z"/>
+                    <svg class="svg-outline ib-icon-sm" viewBox="0 0 24 24">
+                        <circle cx="12" cy="12" r="3"></circle>
+                        <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path>
                     </svg>
-                    <span class="card-title">Settings</span>
+                    <span class="card-title">Configurações</span>
                 </div>
 
                 <div class="ib-card-row" tabindex="0" onclick="salvarCredenciais()">
-                    <svg class="ib-icon ib-icon-sm" viewBox="0 0 24 24">
-                        <path d="M12 4V1L8 5l4 4V6c3.31 0 6 2.69 6 6 0 1.01-.25 1.97-.7 2.8l1.46 1.46C19.54 15.03 20 13.57 20 12c0-4.42-3.58-8-8-8zm0 14c-3.31 0-6-2.69-6-6 0-1.01.25-1.97.7-2.8L5.24 7.74C4.46 8.97 4 10.43 4 12c0 4.42 3.58 8 8 8v3l4-4-4-4v3z"/>
+                    <svg class="svg-outline ib-icon-sm" viewBox="0 0 24 24">
+                        <path d="M21 12a9 9 0 1 1-3-6.7L21 8"></path>
+                        <polyline points="21 3 21 8 16 8"></polyline>
                     </svg>
-                    <span class="card-title">Reload Portal</span>
+                    <span class="card-title">Atualizar</span>
                 </div>
 
-                <div class="ib-card-row" tabindex="0" onclick="window.close()">
-                    <svg class="ib-icon ib-icon-sm" viewBox="0 0 24 24">
-                        <path d="M10.09 15.59L11.5 17l5-5-5-5-1.41 1.41L12.67 11H3v2h9.67l-2.58 2.59zM19 3H5c-1.11 0-2 .9-2 2v4h2V5h14v14H5v-4H3v4c0 1.1.89 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2z"/>
+                <div class="ib-card-row" tabindex="0" onclick="abrirModalConfig()">
+                    <svg class="svg-outline ib-icon-sm" viewBox="0 0 24 24">
+                        <circle cx="12" cy="12" r="10"></circle>
+                        <circle cx="12" cy="10" r="3"></circle>
+                        <path d="M7 20.662V19a2 2 0 0 1 2-2h6a2 2 0 0 1 2 2v1.662"></path>
                     </svg>
-                    <span class="card-title">EXIT</span>
+                    <span class="card-title">Conta</span>
                 </div>
             </div>
 
         </div>
     </div>
 
-    <!-- Modal Configurações -->
+    <!-- Badge de Vencimento -->
+    <div class="expiry-badge">
+        Vencimento: <span id="dataVencimento">3/10/2026</span>
+    </div>
+
+    <!-- Modal de Configuração de Playlist M3U / Xtream Codes -->
     <div id="modalConfig" class="modal-overlay">
         <div class="modal-box">
             <div class="modal-title">Configurar Playlist / Servidor</div>
@@ -571,7 +660,7 @@
                 <label>URL M3U Direta</label>
                 <input type="text" id="cfgM3u" placeholder="http://exemplo.com/lista.m3u">
             </div>
-            <div style="text-align: center; margin: 10px 0; color: #cbd5e1; font-size: 0.85rem;">OU XTREAM CODES</div>
+            <div style="text-align: center; margin: 10px 0; color: #7dd3fc; font-size: 0.85rem;">OU XTREAM CODES</div>
             <div class="form-control">
                 <label>Servidor (URL)</label>
                 <input type="text" id="cfgServer" placeholder="http://servidor.com:80">
@@ -591,7 +680,7 @@
         </div>
     </div>
 
-    <!-- Live TV View -->
+    <!-- Tela de Reprodução de TV ao Vivo -->
     <div id="liveView" class="view">
         <div class="live-sidebar">
             <div class="search-box">
@@ -604,27 +693,30 @@
         </div>
     </div>
 
-    <!-- VOD View (Filmes & Séries) -->
+    <!-- Tela de Conteúdo Sob Demanda (VOD: Filmes e Séries) -->
     <div id="vodView" class="view">
         <div class="vod-header">
             <div class="vod-title" id="vodTitle">Filmes</div>
+            <div class="vod-search-container">
+                <input type="text" id="searchVod" placeholder="Buscar filme ou série..." oninput="filtrarVod()">
+            </div>
             <div class="vod-header-right">
                 <span class="view-all-link" tabindex="0" onclick="carregarViewAll()">View All (Ver Todos)</span>
             </div>
         </div>
         <div id="vodContainer" style="width: 100%;"></div>
-        <div class="load-main-container" id="loadMoreContainer">
+        <div class="load-more-container" id="loadMoreContainer">
             <button class="btn-load-more" tabindex="0" onclick="carregarMaisVod()">Carregar Mais</button>
         </div>
     </div>
 
-    <!-- VOD Player Modal -->
+    <!-- Modal do Player de Vídeo VOD -->
     <div id="vodPlayerModal">
         <button class="btn-close-player" onclick="fecharVodPlayer()">✕ Fechar (ESC)</button>
         <video id="videoVod" controls autoplay></video>
     </div>
 
-    <!-- Footer Copyright Fixado na Inferior Direita (Aparece apenas na Home) -->
+    <!-- Rodapé com Autoria e Contato -->
     <footer class="footer-copyright">
         <span>Direitos Autorais Demilson Lemos -</span>
         <svg class="whatsapp-icon" viewBox="0 0 24 24">
@@ -633,7 +725,9 @@
         <span>21 990288979</span>
     </footer>
 
+    <!-- Lógica JavaScript da Aplicação -->
     <script>
+        // Variáveis Globais de Estado e Listas
         let canaisLive = [];
         let filmesVod = [];
         let seriesVod = [];
@@ -646,6 +740,7 @@
         let hlsVod = new Hls();
         let acaoPendenteAdulto = null;
 
+        // Função para tentar ativar o modo tela cheia ao interagir com a página
         function tentarTelaCheia() {
             if (!document.fullscreenElement && document.documentElement.requestFullscreen) {
                 document.documentElement.requestFullscreen().catch(err => {
@@ -654,6 +749,7 @@
             }
         }
 
+        // Verifica se um item pertence a categorias adultas com base em palavras-chave
         function ehConteudoAdulto(item) {
             if (!item) return false;
             const textoVerificacao = ((item.group || '') + ' ' + (item.name || '')).toUpperCase();
@@ -661,6 +757,7 @@
             return termosAdultos.some(termo => textoVerificacao.includes(termo));
         }
 
+        // Intercepta abertura de conteúdos adultos para solicitar senha PIN (0000)
         function solicitarSenhaAdultoSeNecessario(item, acaoProsseguir) {
             if (ehConteudoAdulto(item)) {
                 acaoPendenteAdulto = acaoProsseguir;
@@ -692,6 +789,7 @@
             }
         }
 
+        // Alterna entre as telas principais e subtelas do aplicativo
         function alternarView(viewId) {
             document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
             document.getElementById(viewId).classList.add('active');
@@ -708,6 +806,7 @@
 
         function voltarHome() { alternarView('homeView'); }
 
+        // Gerenciamento do Modal de Configurações
         function abrirModalConfig() {
             document.getElementById('modalConfig').classList.add('active');
             document.getElementById('cfgM3u').value = localStorage.getItem('m3u_url') || '';
@@ -743,6 +842,7 @@
             carregarPlaylistEExecutar(() => alternarView('homeView'));
         }
 
+        // Obtém a URL configurada ou utiliza a padrão de fallback
         function obterUrlAlvo() {
             const m3u = localStorage.getItem('m3u_url');
             if (m3u) return m3u;
@@ -756,6 +856,7 @@
             return 'https://gist.githubusercontent.com/sempreconceito/267043c96ac39ed5b1b9f3680b91974a/raw/f7cb4d3a34fb734cbec7a1c313822cd5aab72da9/CANAISJOABE.M3U';
         }
 
+        // Carrega e processa a playlist remota ou via cache local
         async function carregarPlaylistEExecutar(callback) {
             if (playlistCarregada) {
                 if (callback) callback();
@@ -803,6 +904,7 @@
             }
         }
 
+        // Parser do formato M3U para separar canais ao vivo, filmes e séries
         function processarM3U(content, callback) {
             document.getElementById('loadingText').innerText = 'Processando canais, filmes e séries...';
             setTimeout(() => {
@@ -861,6 +963,7 @@
             }, 10);
         }
 
+        // Indexa os itens em categorias para exibição estruturada
         function indexarCategorias() {
             cacheCategoriasFilmes = {};
             for (let i = 0; i < filmesVod.length; i++) {
@@ -877,6 +980,7 @@
             }
         }
 
+        // Inicializa a interface de TV ao Vivo
         function abrirLiveTV() {
             carregarPlaylistEExecutar(() => {
                 alternarView('liveView');
@@ -923,6 +1027,7 @@
             renderizarListaLive(res);
         }
 
+        // Executa o stream de vídeo ao vivo utilizando HLS.js ou player nativo
         function playLive(url) {
             const video = document.getElementById('videoLive');
             if (Hls.isSupported()) {
@@ -937,29 +1042,55 @@
             }
         }
 
-        function abrirVOD(tipo) {
+        // Inicializa a interface VOD (Filmes / Séries)
+        function abrirVOD(tipo, focarBusca = false) {
             carregarPlaylistEExecutar(() => {
                 tipoVodAtual = tipo;
                 limiteCategorias = 8;
+                document.getElementById('searchVod').value = '';
                 document.getElementById('vodTitle').innerText = tipo === 'filmes' ? 'Filmes / Locadora' : 'Séries';
                 document.getElementById('loadMoreContainer').style.display = 'block';
                 alternarView('vodView');
                 montarTelaVodFast();
+                if (focarBusca) {
+                    setTimeout(() => document.getElementById('searchVod').focus(), 100);
+                }
             });
         }
 
-        function montarTelaVodFast() {
+        function abrirBuscaRapida() {
+            abrirVOD('filmes', true);
+        }
+
+        // Montagem rápida das linhas e cartazes de VOD com paginação por categoria
+        function montarTelaVodFast(filtroTermo = '') {
             const container = document.getElementById('vodContainer');
             container.innerHTML = '';
             const cats = tipoVodAtual === 'filmes' ? cacheCategoriasFilmes : cacheCategoriasSeries;
 
-            const chavesCategorias = Object.keys(cats);
-            const categoriasVisiveis = chavesCategorias.slice(0, limiteCategorias);
+            const termo = filtroTermo.toLowerCase().trim();
+            let chavesCategorias = Object.keys(cats);
 
-            if (limiteCategorias >= chavesCategorias.length) {
+            let catsFiltradas = {};
+            chavesCategorias.forEach(cat => {
+                const itensFiltrados = cats[cat].filter(item => item.name.toLowerCase().includes(termo));
+                if (itensFiltrados.length > 0) {
+                    catsFiltradas[cat] = itensFiltrados;
+                }
+            });
+
+            const chavesFiltradas = Object.keys(catsFiltradas);
+            const categoriasVisiveis = termo ? chavesFiltradas : chavesFiltradas.slice(0, limiteCategorias);
+
+            if (termo || limiteCategorias >= chavesFiltradas.length) {
                 document.getElementById('loadMoreContainer').style.display = 'none';
             } else {
                 document.getElementById('loadMoreContainer').style.display = 'block';
+            }
+
+            if (categoriasVisiveis.length === 0) {
+                container.innerHTML = `<div style="text-align:center; padding: 40px; color: #bae6fd; font-size: 1.2rem;">Nenhum resultado encontrado para "${filtroTermo}".</div>`;
+                return;
             }
 
             const fragment = document.createDocumentFragment();
@@ -967,7 +1098,7 @@
             categoriasVisiveis.forEach(cat => {
                 const rowC = document.createElement('div');
                 rowC.className = 'vod-row-container';
-                rowC.innerHTML = `<div class="vod-row-title">${cat} (${cats[cat].length})</div>`;
+                rowC.innerHTML = `<div class="vod-row-title">${cat} (${catsFiltradas[cat].length})</div>`;
                 
                 const wrap = document.createElement('div');
                 wrap.className = 'vod-row-wrapper';
@@ -981,7 +1112,7 @@
 
                 btnL.onclick = () => track.scrollBy({left: -400, behavior: 'smooth'});
                 
-                const itensExibicao = cats[cat].slice(0, 50);
+                const itensExibicao = catsFiltradas[cat].slice(0, 50);
 
                 itensExibicao.forEach(item => {
                     const post = document.createElement('div');
@@ -1007,6 +1138,11 @@
             container.appendChild(fragment);
         }
 
+        function filtrarVod() {
+            const termo = document.getElementById('searchVod').value;
+            montarTelaVodFast(termo);
+        }
+
         function clicarVodItem(item) {
             if (solicitarSenhaAdultoSeNecessario(item, () => playVod(item.url))) {
                 return;
@@ -1016,15 +1152,18 @@
 
         function carregarMaisVod() {
             limiteCategorias += 8;
-            montarTelaVodFast();
+            const termo = document.getElementById('searchVod').value;
+            montarTelaVodFast(termo);
         }
 
         function carregarViewAll() {
             const cats = tipoVodAtual === 'filmes' ? cacheCategoriasFilmes : cacheCategoriasSeries;
             limiteCategorias = Object.keys(cats).length;
-            montarTelaVodFast();
+            const termo = document.getElementById('searchVod').value;
+            montarTelaVodFast(termo);
         }
 
+        // Executa a reprodução de filmes ou episódios de séries no modal player
         function playVod(url) {
             const modal = document.getElementById('vodPlayerModal');
             const video = document.getElementById('videoVod');
@@ -1068,6 +1207,7 @@
             modal.classList.remove('active');
         }
 
+        // Listener global de teclado (Teclas ESC ou BackSpace retornam à Home ou fecham modais)
         document.addEventListener('keydown', (e) => {
             if (e.key === 'Escape' || e.key === 'BackSpace') {
                 if (document.getElementById('modalSenhaAdulto').classList.contains('active')) {
