@@ -2,8 +2,10 @@
 <html lang="pt-BR">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>MilPlay V2.1</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <title>MilPlay V2.2</title>
     <script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
     <style>
         :root {
@@ -50,7 +52,7 @@
         .btn-voltar-global {
             position: fixed;
             top: 20px;
-            z-index: 1000;
+            z-index: 2500;
             background: rgba(179, 18, 23, 0.9);
             color: #fff;
             border: 2px solid rgba(255,255,255,0.4);
@@ -68,14 +70,22 @@
         .btn-voltar-left { left: 30px; }
         .btn-voltar-right { right: 30px; }
 
+        /* Exibe e ativa o botão Voltar sempre que estiver fora da Home */
+        body.em-subtela .btn-voltar-global {
+            opacity: 0.85;
+            pointer-events: auto;
+        }
+
         .back-trigger-left:hover ~ .btn-voltar-left,
-        .btn-voltar-left:hover {
+        .btn-voltar-left:hover,
+        body.em-subtela .btn-voltar-left:active {
             opacity: 1;
             pointer-events: auto;
         }
 
         .back-trigger-right:hover ~ .btn-voltar-right,
-        .btn-voltar-right:hover {
+        .btn-voltar-right:hover,
+        body.em-subtela .btn-voltar-right:active {
             opacity: 1;
             pointer-events: auto;
         }
@@ -215,7 +225,7 @@
             font-size: 1.8rem;
         }
 
-        /* Modal Configurações */
+        /* Modal Configurações & Senha */
         .modal-overlay {
             position: fixed; top: 0; left: 0; right: 0; bottom: 0;
             background: rgba(0,0,0,0.85); display: none; align-items: center; justify-content: center; z-index: 2000;
@@ -356,6 +366,17 @@
         @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
         .loading-text { color: #cbd5e1; font-size: 1.1rem; font-weight: 500; letter-spacing: 0.5px; }
 
+        /* Aviso de Orientação Paisagem para Celular */
+        #landscapeWarning {
+            position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
+            background: #0c080d; z-index: 99999; display: none;
+            flex-direction: column; align-items: center; justify-content: center; text-align: center; padding: 20px;
+        }
+        #landscapeWarning svg { width: 80px; height: 80px; fill: #e50914; animation: rotatePhone 1.5s ease-in-out infinite alternate; margin-bottom: 20px; }
+        @keyframes rotatePhone { 0% { transform: rotate(0deg); } 100% { transform: rotate(90deg); } }
+        #landscapeWarning h2 { color: #fff; font-size: 1.5rem; margin-bottom: 10px; }
+        #landscapeWarning p { color: #cbd5e1; font-size: 1rem; }
+
         /* Rodapé Direita - Oculto por padrão, aparece apenas na Home */
         .footer-copyright {
             display: none;
@@ -375,7 +396,6 @@
             pointer-events: none;
         }
 
-        /* Regra para exibir o rodapé apenas quando a Home estiver ativa */
         #homeView.active ~ .footer-copyright {
             display: flex;
         }
@@ -384,6 +404,36 @@
             width: 16px;
             height: 16px;
             fill: #25D366;
+        }
+
+        /* Ajustes Responsivos Específicos para Mobile Landscape / Viewports Reduzidos */
+        @media (max-width: 1024px) and (orientation: portrait) {
+            #landscapeWarning { display: flex; }
+        }
+
+        @media (max-width: 1024px) and (orientation: landscape) {
+            .dashboard-container {
+                width: 95vw;
+                max-width: none;
+                height: 70vh;
+                gap: 15px;
+                margin-top: 40px;
+            }
+            .top-logo img { max-height: 70px; }
+            .card-title-lg { font-size: 1.4rem; }
+            .card-title { font-size: 0.95rem; }
+            .ib-icon-lg { width: 60px; height: 60px; }
+            .ib-icon { width: 32px; height: 32px; }
+            .ib-card, .ib-card-row { padding: 10px; gap: 8px; }
+            #vodView { padding: 60px 20px 20px 20px; }
+            .vod-poster { flex: 0 0 120px; height: 180px; }
+            .btn-voltar-global {
+                top: 10px;
+                padding: 8px 16px;
+                font-size: 0.9rem;
+            }
+            .btn-voltar-left { left: 15px; }
+            .btn-voltar-right { right: 15px; }
         }
 
         @media (min-width: 1920px) {
@@ -398,7 +448,16 @@
         }
     </style>
 </head>
-<body>
+<body onclick="tentarTelaCheia()">
+
+    <!-- Aviso de Orientação para Celular -->
+    <div id="landscapeWarning">
+        <svg viewBox="0 0 24 24">
+            <path d="M16 1H8C6.9 1 6 1.9 6 3v18c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-3V3c0-1.1-.9-2-2-2zm0 18H8V5h8v14z"/>
+        </svg>
+        <h2>Gire o seu Celular</h2>
+        <p>Para uma melhor experiência no MilPlay V2.2, por favor, utilize o aparelho na posição horizontal (paisagem).</p>
+    </div>
 
     <!-- Loading Overlay -->
     <div id="loadingOverlay" class="loading-overlay">
@@ -406,17 +465,32 @@
         <div class="loading-text" id="loadingText">Carregando lista...</div>
     </div>
 
+    <!-- Modal de Senha para Conteúdo Adulto -->
+    <div id="modalSenhaAdulto" class="modal-overlay">
+        <div class="modal-box" style="max-width: 380px; text-align: center;">
+            <div class="modal-title">Canal Protegido</div>
+            <p style="color: #cbd5e1; font-size: 0.9rem; margin-bottom: 15px;">Digite a senha padrão (0000) para acessar os canais adultos.</p>
+            <div class="form-control">
+                <input type="password" id="inputSenhaAdulto" placeholder="Senha (0000)" maxlength="4" style="text-align: center; font-size: 1.2rem; letter-spacing: 4px;">
+            </div>
+            <div class="modal-buttons">
+                <button class="btn-action btn-secondary" onclick="fecharModalSenhaAdulto()">Cancelar</button>
+                <button class="btn-action btn-primary" onclick="validarSenhaAdulto()">Confirmar</button>
+            </div>
+        </div>
+    </div>
+
     <!-- Zonas de detecção de mouse para botões Voltar ocultos -->
     <div class="back-trigger-zone back-trigger-left"></div>
     <div class="back-trigger-zone back-trigger-right"></div>
 
-    <button id="btnVoltarLeft" class="btn-voltar-global btn-voltar-left" onclick="voltarHome()">‹ Voltar</button>
-    <button id="btnVoltarRight" class="btn-voltar-global btn-voltar-right" onclick="voltarHome()">‹ Voltar</button>
+    <button type="button" id="btnVoltarLeft" class="btn-voltar-global btn-voltar-left" onclick="event.stopPropagation(); voltarHome()">‹ Voltar</button>
+    <button type="button" id="btnVoltarRight" class="btn-voltar-global btn-voltar-right" onclick="event.stopPropagation(); voltarHome()">‹ Voltar</button>
 
     <!-- Top Logo Container -->
     <div class="top-logo">
-        <img src="logo.png" alt="Logo" onerror="this.style.display='none'; document.getElementById('altBrandText').style.display='block';">
-        <div id="altBrandText" class="brand-text" style="display:none;">MilPlay <span>V2.1</span></div>
+        <img src="logo.png" alt="MilPlay v2.2 Logo" onerror="this.style.display='none'; document.getElementById('altBrandText').style.display='block';">
+        <div id="altBrandText" class="brand-text" style="display:none;">MilPlay <span>V2.2</span></div>
     </div>
 
     <!-- Home View (Estilo Imagem 2 - IB Player) -->
@@ -517,7 +591,7 @@
         </div>
     </div>
 
-    <!-- Live TV View (Todos os canais disponíveis sem cortes e sem logo sobreposto) -->
+    <!-- Live TV View -->
     <div id="liveView" class="view">
         <div class="live-sidebar">
             <div class="search-box">
@@ -530,7 +604,7 @@
         </div>
     </div>
 
-    <!-- VOD View (Filmes & Séries - Mantido Rápido e Perfeito) -->
+    <!-- VOD View (Filmes & Séries) -->
     <div id="vodView" class="view">
         <div class="vod-header">
             <div class="vod-title" id="vodTitle">Filmes</div>
@@ -539,7 +613,7 @@
             </div>
         </div>
         <div id="vodContainer" style="width: 100%;"></div>
-        <div class="load-more-container" id="loadMoreContainer">
+        <div class="load-main-container" id="loadMoreContainer">
             <button class="btn-load-more" tabindex="0" onclick="carregarMaisVod()">Carregar Mais</button>
         </div>
     </div>
@@ -570,15 +644,65 @@
         let playlistCarregada = false;
         let hlsLive = new Hls();
         let hlsVod = new Hls();
+        let acaoPendenteAdulto = null;
+
+        function tentarTelaCheia() {
+            if (!document.fullscreenElement && document.documentElement.requestFullscreen) {
+                document.documentElement.requestFullscreen().catch(err => {
+                    console.log("Modo tela cheia negado ou indisponível:", err);
+                });
+            }
+        }
+
+        function ehConteudoAdulto(item) {
+            if (!item) return false;
+            const textoVerificacao = ((item.group || '') + ' ' + (item.name || '')).toUpperCase();
+            const termosAdultos = ['ADULTO', 'XXX', 'HOT', 'PRIVATE', 'LIBIDO', 'PLAYBOY', 'VENUS', 'SEXY', 'EROTICO', 'ERÓTICO', 'FOR ADULTS', '+18'];
+            return termosAdultos.some(termo => textoVerificacao.includes(termo));
+        }
+
+        function solicitarSenhaAdultoSeNecessario(item, acaoProsseguir) {
+            if (ehConteudoAdulto(item)) {
+                acaoPendenteAdulto = acaoProsseguir;
+                document.getElementById('inputSenhaAdulto').value = '';
+                document.getElementById('modalSenhaAdulto').classList.add('active');
+                setTimeout(() => document.getElementById('inputSenhaAdulto').focus(), 100);
+                return true;
+            }
+            return false;
+        }
+
+        function fecharModalSenhaAdulto() {
+            document.getElementById('modalSenhaAdulto').classList.remove('active');
+            acaoPendenteAdulto = null;
+        }
+
+        function validarSenhaAdulto() {
+            const senhaDigitada = document.getElementById('inputSenhaAdulto').value.trim();
+            if (senhaDigitada === '0000') {
+                fecharModalSenhaAdulto();
+                if (acaoPendenteAdulto) {
+                    acaoPendenteAdulto();
+                    acaoPendenteAdulto = null;
+                }
+            } else {
+                alert('Senha incorreta! A senha padrão é 0000.');
+                document.getElementById('inputSenhaAdulto').value = '';
+                document.getElementById('inputSenhaAdulto').focus();
+            }
+        }
 
         function alternarView(viewId) {
             document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
             document.getElementById(viewId).classList.add('active');
             
             if(viewId === 'homeView') {
+                document.body.classList.remove('em-subtela');
                 document.getElementById('videoLive').pause();
                 document.getElementById('videoLive').src = '';
                 fecharVodPlayer();
+            } else {
+                document.body.classList.add('em-subtela');
             }
         }
 
@@ -757,8 +881,25 @@
             carregarPlaylistEExecutar(() => {
                 alternarView('liveView');
                 renderizarListaLive(canaisLive);
-                if (canaisLive.length > 0) playLive(canaisLive[0].url);
+                if (canaisLive.length > 0) {
+                    executarSelecaoLive(canaisLive[0]);
+                }
             });
+        }
+
+        function executarSelecaoLive(item) {
+            document.querySelectorAll('.live-item').forEach(el => {
+                if(el.dataset.url === item.url) el.classList.add('active');
+                else el.classList.remove('active');
+            });
+            playLive(item.url);
+        }
+
+        function selecionarCanalLive(item) {
+            if (solicitarSenhaAdultoSeNecessario(item, () => executarSelecaoLive(item))) {
+                return;
+            }
+            executarSelecaoLive(item);
         }
 
         function renderizarListaLive(lista) {
@@ -769,11 +910,8 @@
                 const li = document.createElement('li');
                 li.className = 'live-item';
                 li.tabIndex = 0;
-                li.onclick = () => {
-                    document.querySelectorAll('.live-item').forEach(el => el.classList.remove('active'));
-                    li.classList.add('active');
-                    playLive(item.url);
-                };
+                li.dataset.url = item.url;
+                li.onclick = () => selecionarCanalLive(item);
                 li.innerHTML = `<img src="${item.logo || ''}" onerror="this.src='logo.png'"><div class="live-info"><span class="live-name">${item.name}</span><span class="live-group">${item.group}</span></div>`;
                 ul.appendChild(li);
             });
@@ -849,7 +987,7 @@
                     const post = document.createElement('div');
                     post.className = 'vod-poster';
                     post.tabIndex = 0;
-                    post.onclick = () => playVod(item.url);
+                    post.onclick = () => clicarVodItem(item);
                     post.innerHTML = `<img src="${item.logo || ''}" onerror="this.src='logo.png'"><div class="vod-poster-title">${item.name}</div>`;
                     track.appendChild(post);
                 });
@@ -867,6 +1005,13 @@
             });
 
             container.appendChild(fragment);
+        }
+
+        function clicarVodItem(item) {
+            if (solicitarSenhaAdultoSeNecessario(item, () => playVod(item.url))) {
+                return;
+            }
+            playVod(item.url);
         }
 
         function carregarMaisVod() {
@@ -923,10 +1068,11 @@
             modal.classList.remove('active');
         }
 
-        // Suporte a Teclado / Controle Remoto de TV
         document.addEventListener('keydown', (e) => {
             if (e.key === 'Escape' || e.key === 'BackSpace') {
-                if (document.getElementById('vodPlayerModal').classList.contains('active')) {
+                if (document.getElementById('modalSenhaAdulto').classList.contains('active')) {
+                    fecharModalSenhaAdulto();
+                } else if (document.getElementById('vodPlayerModal').classList.contains('active')) {
                     fecharVodPlayer();
                 } else if (document.getElementById('modalConfig').classList.contains('active')) {
                     fecharModalConfig();
@@ -937,4 +1083,4 @@
         });
     </script>
 </body>
-</html>[cite: 3]
+</html>
