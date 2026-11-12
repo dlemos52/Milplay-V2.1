@@ -23,20 +23,28 @@
             padding: 0;
             font-family: 'Segoe UI', Roboto, Tahoma, Geneva, Verdana, sans-serif;
             user-select: none;
+            -webkit-tap-highlight-color: transparent;
         }
 
         body {
             background-color: var(--bg-dark);
             background: radial-gradient(circle at 75% 35%, #07398a 0%, #031947 55%, #020c24 100%);
             color: #ffffff;
-            height: 100vh;
+            min-height: 100vh;
+            min-height: -webkit-fill-available;
             width: 100vw;
-            overflow: hidden;
+            overflow-x: hidden;
+            overflow-y: auto;
             display: flex;
             flex-direction: column;
-            justify-content: center;
+            justify-content: flex-start;
             align-items: center;
             position: relative;
+            padding: env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);
+        }
+
+        html {
+            height: -webkit-fill-available;
         }
 
         /* Efeitos de Fundo */
@@ -104,8 +112,8 @@
         .back-trigger-zone {
             position: fixed;
             top: 0;
-            width: 150px;
-            height: 80px;
+            width: 100px;
+            height: 70px;
             z-index: 2400;
         }
         .back-trigger-left { left: 0; }
@@ -113,35 +121,37 @@
 
         .btn-voltar-global {
             position: fixed;
-            top: 20px;
+            top: 15px;
             z-index: 2500;
             background: #0b69eb;
             color: #fff;
             border: 2px solid #ffffff;
-            padding: 10px 22px;
+            padding: 8px 16px;
             border-radius: 10px;
             cursor: pointer;
             font-weight: bold;
-            font-size: 1rem;
+            font-size: 0.9rem;
             opacity: 0;
             pointer-events: none;
             transition: opacity 0.3s ease, transform 0.2s;
             box-shadow: 0 0 18px rgba(56, 189, 248, 0.7);
         }
 
-        .btn-voltar-left { left: 30px; }
-        .btn-voltar-right { right: 30px; }
+        .btn-voltar-left { left: 15px; }
+        .btn-voltar-right { right: 15px; }
 
         body.em-subtela .back-trigger-left:hover ~ .btn-voltar-left,
         body.em-subtela .btn-voltar-left:hover,
-        body.em-subtela .btn-voltar-left:active {
+        body.em-subtela .btn-voltar-left:active,
+        body.em-subtela .btn-voltar-left {
             opacity: 1;
             pointer-events: auto;
         }
 
         body.em-subtela .back-trigger-right:hover ~ .btn-voltar-right,
         body.em-subtela .btn-voltar-right:hover,
-        body.em-subtela .btn-voltar-right:active {
+        body.em-subtela .btn-voltar-right:active,
+        body.em-subtela .btn-voltar-right {
             opacity: 1;
             pointer-events: auto;
         }
@@ -150,7 +160,7 @@
         .view {
             display: none;
             width: 100%;
-            height: 100%;
+            height: 100vh;
             flex-direction: column;
             align-items: center;
             justify-content: center;
@@ -159,75 +169,74 @@
         }
         .view.active { display: flex; }
 
-        /* Top Logo Container: Sem fundo, centralizado acima dos cards e com mais espaçamento superior */
+        /* Top Logo Container Responsivo */
         .top-logo {
             display: flex;
-            position: fixed;
-            top: 35px;
-            left: 50%;
-            transform: translateX(-50%);
+            position: relative;
+            margin-top: 2vh;
+            margin-bottom: 2vh;
+            width: 100%;
             align-items: center;
             justify-content: center;
             z-index: 1500;
             background: transparent;
-            padding: 0;
+            padding: 0 15px;
             border: none;
             box-shadow: none;
-            backdrop-filter: none;
-            -webkit-backdrop-filter: none;
         }
         
-        /* Oculta o logo automaticamente quando o corpo estiver em qualquer subtela (Canais, Filmes ou Séries) */
         body.em-subtela .top-logo {
             display: none !important;
         }
 
         .top-logo img {
-            max-height: 140px;
-            max-width: 420px;
+            max-height: clamp(70px, 15vh, 130px);
+            max-width: 85vw;
             object-fit: contain;
             filter: drop-shadow(0 4px 12px rgba(0, 0, 0, 0.7)) drop-shadow(0 0 15px rgba(56, 189, 248, 0.6));
         }
         .brand-text {
-            font-size: 2.2rem;
+            font-size: 2rem;
             font-weight: 800;
             letter-spacing: 1px;
             color: #ffffff;
+            text-align: center;
         }
         .brand-text span { color: #60a5fa; }
 
-        /* Dashboard Layout */
+        /* Dashboard Layout Totalmente Responsivo */
         .dashboard-container {
             display: grid;
-            grid-template-columns: 2.15fr 2.25fr 1.65fr;
-            gap: 18px;
-            width: 84vw;
+            grid-template-columns: 1.8fr 2.2fr 1.6fr;
+            gap: 14px;
+            width: 92vw;
             max-width: 1180px;
-            height: 46vh;
-            max-height: 410px;
+            height: auto;
+            max-height: 75vh;
             align-items: stretch;
-            margin-top: 75px;
+            margin-bottom: 4vh;
         }
 
         .card-main-live {
             background: var(--blue-card);
             border: 1.5px solid var(--border-subtle);
             border-radius: 14px;
-            height: 100%;
+            min-height: 180px;
             display: flex;
             flex-direction: column;
             align-items: center;
             justify-content: center;
-            gap: 22px;
+            gap: 16px;
             cursor: pointer;
             transition: all 0.25s cubic-bezier(0.25, 0.8, 0.25, 1);
             box-shadow: 0 10px 28px rgba(0, 15, 50, 0.45), inset 0 1px 1px rgba(255, 255, 255, 0.25);
             position: relative;
+            padding: 15px;
         }
 
         .live-icon-circle {
-            width: 112px;
-            height: 112px;
+            width: clamp(70px, 12vw, 100px);
+            height: clamp(70px, 12vw, 100px);
             border-radius: 50%;
             background: rgba(255, 255, 255, 0.12);
             display: flex;
@@ -241,61 +250,56 @@
             display: grid;
             grid-template-columns: 1fr 1fr;
             grid-template-rows: 1fr 1fr;
-            gap: 16px;
+            gap: 12px;
             height: 100%;
         }
 
         .grid-right {
             display: grid;
             grid-template-rows: 1fr 1fr 1fr;
-            gap: 16px;
+            gap: 12px;
             height: 100%;
         }
 
         .ib-card {
             background: var(--blue-card);
             border: 1.5px solid var(--border-subtle);
-            border-radius: 13px;
+            border-radius: 12px;
             display: flex;
             flex-direction: column;
             align-items: center;
             justify-content: center;
-            gap: 12px;
+            gap: 8px;
             cursor: pointer;
             transition: all 0.25s cubic-bezier(0.25, 0.8, 0.25, 1);
             box-shadow: 0 8px 22px rgba(0, 15, 50, 0.4), inset 0 1px 1px rgba(255, 255, 255, 0.22);
-            padding: 12px;
+            padding: 10px;
             position: relative;
+            min-height: 80px;
         }
 
         .ib-card-row {
             background: var(--blue-card);
             border: 1.5px solid var(--border-subtle);
-            border-radius: 13px;
+            border-radius: 12px;
             display: flex;
             align-items: center;
-            padding: 0 22px;
-            gap: 16px;
+            padding: 0 16px;
+            gap: 12px;
             cursor: pointer;
             transition: all 0.25s cubic-bezier(0.25, 0.8, 0.25, 1);
             box-shadow: 0 8px 22px rgba(0, 15, 50, 0.4), inset 0 1px 1px rgba(255, 255, 255, 0.22);
             position: relative;
-            height: 100%;
+            min-height: 52px;
         }
 
         .card-main-live:hover, .ib-card:hover, .ib-card-row:hover,
-        .card-main-live:focus, .ib-card:focus, .ib-card-row:focus {
+        .card-main-live:active, .ib-card:active, .ib-card-row:active {
             background: var(--blue-card-hover);
-            transform: scale(1.035);
-            border: 2.5px solid var(--border-focus);
-            box-shadow: 0 0 25px rgba(255, 255, 255, 0.55), 0 12px 30px rgba(0, 30, 90, 0.6);
+            transform: scale(1.02);
+            border: 2px solid var(--border-focus);
+            box-shadow: 0 0 20px rgba(255, 255, 255, 0.45);
             outline: none;
-            z-index: 10;
-        }
-
-        .card-main-live:hover .live-icon-circle {
-            transform: scale(1.06);
-            background: rgba(255, 255, 255, 0.18);
         }
 
         .svg-outline {
@@ -304,32 +308,32 @@
             stroke-width: 2;
             stroke-linecap: round;
             stroke-linejoin: round;
-            transition: transform 0.25s ease;
         }
 
-        .ib-icon { width: 42px; height: 42px; }
-        .ib-icon-lg { width: 56px; height: 56px; }
-        .ib-icon-sm { width: 28px; height: 28px; }
+        .ib-icon { width: 32px; height: 32px; }
+        .ib-icon-lg { width: 48px; height: 48px; }
+        .ib-icon-sm { width: 22px; height: 22px; }
 
         .card-title {
-            font-size: 1.05rem;
+            font-size: clamp(0.85rem, 1.8vw, 1rem);
             font-weight: 700;
             color: #ffffff;
-            letter-spacing: 0.3px;
+            text-align: center;
         }
         .card-title-lg {
-            font-size: 1.55rem;
+            font-size: clamp(1.1rem, 2.5vw, 1.4rem);
             font-weight: 700;
+            text-align: center;
         }
 
-        /* Vencimento no Canto Inferior Esquerdo */
+        /* Rodapés informativos discreto */
         .expiry-badge {
             display: none;
             position: fixed;
-            bottom: 22px;
-            left: 38px;
+            bottom: 12px;
+            left: 20px;
             z-index: 1000;
-            font-size: 0.95rem;
+            font-size: 0.85rem;
             font-weight: 700;
             color: #ffffff;
             text-shadow: 0 2px 6px rgba(0, 0, 0, 0.8);
@@ -338,124 +342,214 @@
         .expiry-badge span { color: #38bdf8; margin-left: 4px; }
         #homeView.active ~ .expiry-badge { display: block; }
 
-        /* Rodapé Direita */
         .footer-copyright {
             display: none;
             position: fixed;
-            bottom: 18px;
-            right: 30px;
+            bottom: 10px;
+            right: 20px;
             z-index: 1000;
             align-items: center;
-            gap: 8px;
-            font-size: 0.85rem;
+            gap: 6px;
+            font-size: 0.75rem;
             color: rgba(255, 255, 255, 0.85);
-            background: rgba(3, 25, 71, 0.65);
-            padding: 6px 14px;
-            border-radius: 20px;
+            background: rgba(3, 25, 71, 0.75);
+            padding: 4px 10px;
+            border-radius: 15px;
             backdrop-filter: blur(6px);
             border: 1px solid rgba(56, 189, 248, 0.35);
             pointer-events: none;
         }
         #homeView.active ~ .footer-copyright { display: flex; }
-        .whatsapp-icon { width: 16px; height: 16px; fill: #25D366; }
+        .whatsapp-icon { width: 14px; height: 14px; fill: #25D366; }
+
+        /* Media Queries para Responsividade Total em Celulares (Portrait e Landscape) */
+        @media (max-width: 900px) {
+            body {
+                overflow-y: auto;
+                height: auto;
+                min-height: 100vh;
+                justify-content: flex-start;
+                padding-top: 10px;
+            }
+
+            .dashboard-container {
+                display: flex;
+                flex-direction: column;
+                width: 94vw;
+                max-width: 420px;
+                gap: 12px;
+                margin-top: 5px;
+                margin-bottom: 50px;
+                height: auto;
+                max-height: none;
+            }
+
+            .card-main-live {
+                flex-direction: row;
+                min-height: 90px;
+                padding: 12px 20px;
+                justify-content: flex-start;
+                gap: 20px;
+            }
+
+            .live-icon-circle {
+                width: 55px;
+                height: 55px;
+            }
+
+            .grid-middle {
+                display: grid;
+                grid-template-columns: 1fr 1fr;
+                grid-template-rows: auto auto;
+                gap: 12px;
+                height: auto;
+            }
+
+            .ib-card {
+                min-height: 95px;
+            }
+
+            .grid-right {
+                display: grid;
+                grid-template-columns: 1fr 1fr 1fr;
+                grid-template-rows: auto;
+                gap: 10px;
+                height: auto;
+            }
+
+            .ib-card-row {
+                flex-direction: column;
+                justify-content: center;
+                text-align: center;
+                padding: 12px 8px;
+                min-height: 85px;
+                gap: 6px;
+            }
+
+            .expiry-badge, .footer-copyright {
+                position: relative;
+                bottom: auto;
+                left: auto;
+                right: auto;
+                margin: 10px auto;
+                text-align: center;
+                pointer-events: auto;
+            }
+            .footer-copyright {
+                margin-bottom: 25px;
+            }
+        }
 
         /* Modais e Subtelas */
         .modal-overlay {
             position: fixed; top: 0; left: 0; right: 0; bottom: 0;
-            background: rgba(2, 12, 36, 0.88); backdrop-filter: blur(8px); display: none; align-items: center; justify-content: center; z-index: 2000;
+            background: rgba(2, 12, 36, 0.9); backdrop-filter: blur(8px); display: none; align-items: center; justify-content: center; z-index: 2000;
+            padding: 15px;
         }
         .modal-overlay.active { display: flex; }
         .modal-box {
-            background: #041d52; border: 2px solid #38bdf8; padding: 30px; border-radius: 14px;
-            width: 100%; max-width: 450px; box-shadow: 0 0 35px rgba(14, 165, 233, 0.45);
+            background: #041d52; border: 2px solid #38bdf8; padding: 24px; border-radius: 14px;
+            width: 100%; max-width: 420px; box-shadow: 0 0 35px rgba(14, 165, 233, 0.45);
+            max-height: 90vh;
+            overflow-y: auto;
         }
-        .modal-title { font-size: 1.3rem; font-weight: bold; margin-bottom: 20px; color: #ffffff; text-align: center; }
-        .form-control { margin-bottom: 15px; }
-        .form-control label { display: block; font-size: 0.85rem; color: #bae6fd; margin-bottom: 5px; }
+        .modal-title { font-size: 1.2rem; font-weight: bold; margin-bottom: 15px; color: #ffffff; text-align: center; }
+        .form-control { margin-bottom: 12px; }
+        .form-control label { display: block; font-size: 0.85rem; color: #bae6fd; margin-bottom: 4px; }
         .form-control input {
-            width: 100%; padding: 12px; border-radius: 8px; border: 1px solid #1d4ed8; background: #020c24; color: #fff; outline: none;
+            width: 100%; padding: 10px 12px; border-radius: 8px; border: 1px solid #1d4ed8; background: #020c24; color: #fff; outline: none; font-size: 1rem;
         }
         .form-control input:focus { border-color: #ffffff; box-shadow: 0 0 10px rgba(56, 189, 248, 0.6); }
-        .modal-buttons { display: flex; gap: 10px; margin-top: 20px; }
-        .btn-action { flex: 1; padding: 12px; border-radius: 8px; border: none; font-weight: bold; cursor: pointer; }
+        .modal-buttons { display: flex; gap: 10px; margin-top: 18px; }
+        .btn-action { flex: 1; padding: 11px; border-radius: 8px; border: none; font-weight: bold; cursor: pointer; font-size: 0.95rem; }
         .btn-primary { background: #0b69eb; color: #fff; border: 1px solid rgba(255,255,255,0.4); }
         .btn-secondary { background: #1e293b; color: #fff; }
 
         /* Live TV View */
-        #liveView { flex-direction: row; background: #020c24; }
+        #liveView { flex-direction: row; background: #020c24; height: 100vh; }
         .live-sidebar {
-            width: 380px; background: #03153a; border-right: 1px solid rgba(56, 189, 248, 0.25);
+            width: 340px; max-width: 40vw; background: #03153a; border-right: 1px solid rgba(56, 189, 248, 0.25);
             display: flex; flex-direction: column; height: 100vh;
         }
-        .search-box { padding: 15px; background: #041d52; }
+        .search-box { padding: 12px; background: #041d52; }
         .search-box input {
             width: 100%; padding: 10px 14px; border-radius: 8px; border: 1px solid #1d4ed8; background: #020c24; color: #fff; outline: none; font-size: 0.95rem;
         }
         .live-list { flex: 1; overflow-y: auto; list-style: none; }
         .live-item {
-            display: flex; align-items: center; padding: 12px 18px; gap: 15px;
+            display: flex; align-items: center; padding: 10px 14px; gap: 12px;
             cursor: pointer; border-bottom: 1px solid rgba(255,255,255,0.06); transition: background 0.2s;
         }
         .live-item:hover, .live-item.active, .live-item:focus { background: #0b69eb; outline: none; }
-        .live-item img { width: 40px; height: 40px; object-fit: contain; background: #000; border-radius: 6px; }
+        .live-item img { width: 36px; height: 36px; object-fit: contain; background: #000; border-radius: 6px; flex-shrink: 0; }
         .live-info { display: flex; flex-direction: column; overflow: hidden; }
-        .live-name { font-size: 0.95rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-weight: 600; }
-        .live-group { font-size: 0.75rem; color: #bae6fd; margin-top: 2px; }
+        .live-name { font-size: 0.9rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-weight: 600; }
+        .live-group { font-size: 0.7rem; color: #bae6fd; margin-top: 2px; }
         .live-player-area { flex: 1; background: #000; display: flex; align-items: center; justify-content: center; height: 100vh; position: relative; }
-        .live-player-area video { width: 100%; height: 100%; }
+        .live-player-area video { width: 100%; height: 100%; object-fit: contain; }
+
+        @media (max-width: 768px) {
+            #liveView { flex-direction: column; }
+            .live-sidebar { width: 100%; max-width: 100%; height: 45vh; }
+            .live-player-area { height: 55vh; width: 100%; }
+        }
 
         /* VOD View */
         #vodView {
             justify-content: flex-start;
-            padding: 60px 50px 40px 50px;
+            padding: 50px 20px 30px 20px;
             overflow-y: auto;
             height: 100vh;
             background: radial-gradient(circle at top, #06286e 0%, #020c24 100%);
         }
         .vod-header { 
             display: flex; justify-content: space-between; align-items: center; 
-            margin-bottom: 25px; width: 100%; border-bottom: 1px solid rgba(56, 189, 248, 0.25);
-            padding-bottom: 15px; gap: 20px;
+            margin-bottom: 20px; width: 100%; border-bottom: 1px solid rgba(56, 189, 248, 0.25);
+            padding-bottom: 12px; gap: 15px; flex-wrap: wrap;
         }
-        .vod-title { font-size: 1.8rem; font-weight: bold; color: #ffffff; white-space: nowrap; min-width: 180px; }
-        .vod-search-container { width: 320px; margin-left: auto; }
+        .vod-title { font-size: 1.5rem; font-weight: bold; color: #ffffff; white-space: nowrap; }
+        .vod-search-container { width: 280px; max-width: 100%; margin-left: auto; }
         .vod-search-container input {
-            width: 100%; padding: 10px 14px; border-radius: 8px; border: 1px solid #1d4ed8; background: #03153a; color: #fff; outline: none; font-size: 0.95rem;
+            width: 100%; padding: 8px 12px; border-radius: 8px; border: 1px solid #1d4ed8; background: #03153a; color: #fff; outline: none; font-size: 0.9rem;
         }
         .view-all-link {
-            color: #7dd3fc; font-size: 1.05rem; font-weight: 600; cursor: pointer; text-decoration: underline; padding: 8px 12px; border-radius: 8px; white-space: nowrap;
+            color: #7dd3fc; font-size: 0.95rem; font-weight: 600; cursor: pointer; text-decoration: underline; padding: 6px 10px; border-radius: 8px; white-space: nowrap;
         }
         .view-all-link:hover { color: #ffffff; background: rgba(11, 105, 235, 0.4); }
 
-        .vod-row-container { margin-bottom: 30px; width: 100%; }
-        .vod-row-title { font-size: 1.25rem; margin-bottom: 14px; color: #e0f2fe; font-weight: bold; }
+        .vod-row-container { margin-bottom: 25px; width: 100%; }
+        .vod-row-title { font-size: 1.15rem; margin-bottom: 10px; color: #e0f2fe; font-weight: bold; }
         .vod-row-wrapper { display: flex; align-items: center; position: relative; width: 100%; }
-        .vod-row { display: flex; gap: 18px; overflow-x: auto; scroll-behavior: smooth; padding: 8px 4px; width: 100%; scrollbar-width: none; }
+        .vod-row { display: flex; gap: 14px; overflow-x: auto; scroll-behavior: smooth; padding: 6px 2px; width: 100%; scrollbar-width: none; }
         .vod-row::-webkit-scrollbar { display: none; }
         
         .vod-poster {
-            flex: 0 0 150px; height: 225px; background: #03153a; border-radius: 10px;
+            flex: 0 0 130px; height: 190px; background: #03153a; border-radius: 8px;
             overflow: hidden; cursor: pointer; position: relative; border: 2px solid rgba(56, 189, 248, 0.25); transition: all 0.2s;
         }
-        .vod-poster:hover { transform: scale(1.06); border-color: #ffffff; box-shadow: 0 0 20px rgba(56, 189, 248, 0.7); }
+        .vod-poster:hover { transform: scale(1.04); border-color: #ffffff; box-shadow: 0 0 15px rgba(56, 189, 248, 0.7); }
         .vod-poster img { width: 100%; height: 100%; object-fit: cover; }
         .vod-poster-title {
             position: absolute; bottom: 0; left: 0; right: 0; background: rgba(2, 12, 36, 0.92);
-            font-size: 0.8rem; padding: 8px 5px; text-align: center; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; color: #fff;
+            font-size: 0.75rem; padding: 6px 4px; text-align: center; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; color: #fff;
         }
 
         .scroll-btn {
             position: absolute; z-index: 10; background: #0b69eb; color: #ffffff;
-            border: 1.5px solid #ffffff; width: 42px; height: 42px; border-radius: 50%; cursor: pointer;
-            display: flex; align-items: center; justify-content: center; font-size: 1.2rem;
+            border: 1.5px solid #ffffff; width: 36px; height: 36px; border-radius: 50%; cursor: pointer;
+            display: flex; align-items: center; justify-content: center; font-size: 1rem;
             box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5);
         }
-        .scroll-left { left: -20px; }
-        .scroll-right { right: -20px; }
+        .scroll-left { left: -14px; }
+        .scroll-right { right: -14px; }
         
-        .load-more-container { text-align: center; margin: 30px 0 60px 0; width: 100%; }
+        @media (max-width: 768px) {
+            .scroll-btn { display: none; } /* Esconde setas laterais em touch screens para facilitar o swipe manual */
+        }
+        
+        .load-more-container { text-align: center; margin: 25px 0 50px 0; width: 100%; }
         .btn-load-more {
-            background: #0b69eb; border: 2px solid rgba(255,255,255,0.5); color: #fff; padding: 14px 40px; border-radius: 10px; cursor: pointer; font-weight: bold; font-size: 1.1rem;
+            background: #0b69eb; border: 2px solid rgba(255,255,255,0.5); color: #fff; padding: 12px 30px; border-radius: 10px; cursor: pointer; font-weight: bold; font-size: 1rem;
         }
         .btn-load-more:hover { border-color: #ffffff; box-shadow: 0 0 20px rgba(56, 189, 248, 0.7); }
 
@@ -463,11 +557,11 @@
             position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: #000; z-index: 3000; display: none; align-items: center; justify-content: center;
         }
         #vodPlayerModal.active { display: flex; }
-        #vodPlayerModal video { width: 100%; height: 100%; }
+        #vodPlayerModal video { width: 100%; height: 100%; object-fit: contain; }
 
         .btn-close-player {
-            position: absolute; top: 25px; right: 35px; z-index: 3100;
-            background: #0b69eb; color: #fff; border: 2px solid #fff; padding: 10px 20px; border-radius: 8px; font-weight: bold; cursor: pointer;
+            position: absolute; top: 15px; right: 20px; z-index: 3100;
+            background: #0b69eb; color: #fff; border: 2px solid #fff; padding: 8px 16px; border-radius: 8px; font-weight: bold; cursor: pointer; font-size: 0.9rem;
         }
 
         .loading-overlay {
@@ -475,28 +569,13 @@
             background: rgba(2, 12, 36, 0.95); display: none; flex-direction: column; align-items: center; justify-content: center; z-index: 4000; gap: 15px;
         }
         .loading-spinner {
-            width: 55px; height: 55px; border: 4px solid rgba(255, 255, 255, 0.2); border-top: 4px solid #38bdf8; border-radius: 50%; animation: spin 0.8s linear infinite;
+            width: 50px; height: 50px; border: 4px solid rgba(255, 255, 255, 0.2); border-top: 4px solid #38bdf8; border-radius: 50%; animation: spin 0.8s linear infinite;
         }
         @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
-        .loading-text { color: #e0f2fe; font-size: 1.1rem; font-weight: 500; }
+        .loading-text { color: #e0f2fe; font-size: 1rem; font-weight: 500; text-align: center; padding: 0 20px; }
 
-        #landscapeWarning {
-            position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: #020c24; z-index: 99999; display: none;
-            flex-direction: column; align-items: center; justify-content: center; text-align: center; padding: 20px;
-        }
-        #landscapeWarning svg { width: 80px; height: 80px; fill: #38bdf8; animation: rotatePhone 1.5s ease-in-out infinite alternate; margin-bottom: 20px; }
-        @keyframes rotatePhone { 0% { transform: rotate(0deg); } 100% { transform: rotate(90deg); } }
-        #landscapeWarning h2 { color: #fff; font-size: 1.5rem; margin-bottom: 10px; }
-        #landscapeWarning p { color: #bae6fd; font-size: 1rem; }
-
-        @media (max-width: 1024px) and (orientation: portrait) { #landscapeWarning { display: flex; } }
-        @media (max-width: 1024px) and (orientation: landscape) {
-            .dashboard-container { width: 92vw; height: 62vh; gap: 12px; margin-top: 55px; }
-            .top-logo img { max-height: 100px; }
-            .live-icon-circle { width: 72px; height: 72px; }
-            .card-title-lg { font-size: 1.25rem; }
-            .card-title { font-size: 0.9rem; }
-        }
+        /* Aviso de rotação removido para celular fluir livremente em qualquer posição sem travamentos */
+        #landscapeWarning { display: none !important; }
     </style>
 </head>
 <body onclick="tentarTelaCheia()">
@@ -513,13 +592,6 @@
         <div class="neon-beam-right"></div>
     </div>
 
-    <!-- Aviso de Orientação Mobile -->
-    <div id="landscapeWarning">
-        <svg viewBox="0 0 24 24"><path d="M16 1H8C6.9 1 6 1.9 6 3v18c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-3V3c0-1.1-.9-2-2-2zm0 18H8V5h8v14z"/></svg>
-        <h2>Gire o seu Celular</h2>
-        <p>Para uma melhor experiência no MilPlay v2.4, utilize o aparelho na posição horizontal (paisagem).</p>
-    </div>
-
     <!-- Loading Overlay -->
     <div id="loadingOverlay" class="loading-overlay">
         <div class="loading-spinner"></div>
@@ -528,7 +600,7 @@
 
     <!-- Modal Senha Adulto -->
     <div id="modalSenhaAdulto" class="modal-overlay">
-        <div class="modal-box" style="max-width: 380px; text-align: center;">
+        <div class="modal-box" style="max-width: 360px; text-align: center;">
             <div class="modal-title">Canal Protegido</div>
             <p style="color: #bae6fd; font-size: 0.9rem; margin-bottom: 15px;">Digite a senha padrão (0000) para acessar.</p>
             <div class="form-control">
@@ -547,7 +619,7 @@
     <button type="button" id="btnVoltarLeft" class="btn-voltar-global btn-voltar-left" onclick="event.stopPropagation(); voltarHome()">‹ Voltar</button>
     <button type="button" id="btnVoltarRight" class="btn-voltar-global btn-voltar-right" onclick="event.stopPropagation(); voltarHome()">‹ Voltar</button>
 
-    <!-- Top Logo Container: Sem fundo, centralizado acima dos cards e com mais espaço do topo -->
+    <!-- Top Logo Container -->
     <div class="top-logo">
         <img id="appMainLogo" src="logo.png" alt="MilPlay v2.4" onerror="if(!this.dataset.triedRoot){this.dataset.triedRoot='1';this.src='../logo.png';}else{this.style.display='none';document.getElementById('altBrandText').style.display='block';}">
         <div id="altBrandText" class="brand-text" style="display:none;">MilPlay <span>v2.4</span></div>
@@ -647,7 +719,7 @@
                 <label>URL M3U Direta</label>
                 <input type="text" id="cfgM3u" placeholder="http://exemplo.com/lista.m3u">
             </div>
-            <div style="text-align: center; margin: 10px 0; color: #7dd3fc; font-size: 0.85rem;">OU XTREAM CODES</div>
+            <div style="text-align: center; margin: 8px 0; color: #7dd3fc; font-size: 0.8rem;">OU XTREAM CODES</div>
             <div class="form-control">
                 <label>Servidor (URL)</label>
                 <input type="text" id="cfgServer" placeholder="http://servidor.com:80">
@@ -676,7 +748,7 @@
             <ul id="liveList" class="live-list"></ul>
         </div>
         <div class="live-player-area">
-            <video id="videoLive" controls autoplay></video>
+            <video id="videoLive" controls autoplay playsinline></video>
         </div>
     </div>
 
@@ -699,8 +771,8 @@
 
     <!-- VOD Player Modal -->
     <div id="vodPlayerModal">
-        <button class="btn-close-player" onclick="fecharVodPlayer()">✕ Fechar (ESC)</button>
-        <video id="videoVod" controls autoplay></video>
+        <button class="btn-close-player" onclick="fecharVodPlayer()">✕ Fechar</button>
+        <video id="videoVod" controls autoplay playsinline></video>
     </div>
 
     <!-- Rodapé Direita -->
