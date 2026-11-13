@@ -759,14 +759,30 @@
 
         <div class="playlist-wrapper">
             <div class="panel-box">
-                <h2><i class="fa-solid fa-cloud-arrow-down"></i> Adicionar Nova Lista</h2>
+                <h2><i class="fa-solid fa-cloud-arrow-down"></i> Adicionar Nova Lista / Xtream</h2>
                 <div class="form-group">
                     <label>Nome da Lista</label>
                     <input type="text" id="playlist-name" class="form-control" placeholder="Ex: Minha Lista Principal">
                 </div>
                 <div class="form-group">
-                    <label>URL da Lista (HTTP / HTTPS / Pastebin Raw)</label>
+                    <label>URL Direta M3U (Opcional)</label>
                     <input type="url" id="playlist-url" class="form-control" placeholder="http://exemplo.com/lista.m3u">
+                </div>
+                <hr style="border:0; border-top:1px solid var(--border-color); margin: 15px 0;">
+                <p style="color: var(--gold-color); font-size: 0.9rem; margin-bottom: 10px;"><i class="fa-solid fa-key"></i> Ou Acesso com Usuário e Senha:</p>
+                <div class="form-group">
+                    <label>URL do Servidor (ex: http://servidor.com:8080)</label>
+                    <input type="url" id="server-host" class="form-control" placeholder="http://servidor.com:8080">
+                </div>
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+                    <div class="form-group">
+                        <label>Usuário</label>
+                        <input type="text" id="server-user" class="form-control" placeholder="Usuário">
+                    </div>
+                    <div class="form-group">
+                        <label>Senha</label>
+                        <input type="password" id="server-pass" class="form-control" placeholder="Senha">
+                    </div>
                 </div>
                 <button class="btn-primary" onclick="saveAndLoadPlaylist()">
                     <i class="fa-solid fa-floppy-disk"></i> Salvar e Carregar Lista Completa
@@ -948,7 +964,6 @@
             overlay.classList.toggle('active');
         }
 
-        // Revelar botão voltar ao tocar próximo ao topo da tela no celular
         function touchTopZone(el) {
             el.classList.add('touched');
             setTimeout(() => {
@@ -1017,7 +1032,7 @@
         }
 
         /* =====================================================================
-           CÓDIGO ORIGINAL PRESERVADO + AJUSTE DE DATA E HORA (AM/PM)
+           CÓDIGO ORIGINAL PRESERVADO + SUPORTE M3U / USER & PASS / PROXY CORS
         ===================================================================== */
         let appData = { live: [], movies: [], series: [] };
         let hlsLive = null;
@@ -1185,14 +1200,23 @@
 
         async function saveAndLoadPlaylist() {
             const name = document.getElementById('playlist-name').value.trim() || 'Minha Lista';
-            const url = document.getElementById('playlist-url').value.trim();
+            let url = document.getElementById('playlist-url').value.trim();
+            const host = document.getElementById('server-host').value.trim();
+            const user = document.getElementById('server-user').value.trim();
+            const pass = document.getElementById('server-pass').value.trim();
 
-            if (!url) {
-                alert('Por favor, insira uma URL válida.');
+            if (!url && (!host || !user || !pass)) {
+                alert('Por favor, informe a URL M3U ou preencha Servidor, Usuário e Senha.');
                 return;
             }
 
-            localStorage.setItem('milplay_playlist_meta', JSON.stringify({ name, url }));
+            // Se preencheu usuário e senha, gera a URL Xtream Codes M3U automaticamente
+            if (!url && host && user && pass) {
+                let cleanHost = host.endsWith('/') ? host.slice(0, -1) : host;
+                url = `${cleanHost}/get.php?username=${encodeURIComponent(user)}&password=${encodeURIComponent(pass)}&type=m3u`;
+            }
+
+            localStorage.setItem('milplay_playlist_meta', JSON.stringify({ name, url, host, user, pass }));
             renderSavedPlaylistInfo();
             await fetchAndParseM3U(url);
         }
@@ -1200,11 +1224,14 @@
         function loadSavedPlaylistOnBoot() {
             const saved = localStorage.getItem('milplay_playlist_meta');
             if (saved) {
-                const { name, url } = JSON.parse(saved);
-                document.getElementById('playlist-name').value = name;
-                document.getElementById('playlist-url').value = url;
+                const { name, url, host, user, pass } = JSON.parse(saved);
+                if(name) document.getElementById('playlist-name').value = name;
+                if(url) document.getElementById('playlist-url').value = url;
+                if(host) document.getElementById('server-host').value = host;
+                if(user) document.getElementById('server-user').value = user;
+                if(pass) document.getElementById('server-pass').value = pass;
                 document.getElementById('badge-playlist').textContent = name;
-                fetchAndParseM3U(url, true);
+                if(url) fetchAndParseM3U(url, true);
             }
         }
 
@@ -1220,7 +1247,7 @@
                 <div class="saved-playlist-item">
                     <div>
                         <strong>${name}</strong><br>
-                        <small style="color: var(--text-muted); word-break: break-all;">${url}</small>
+                        <small style="color: var(--text-muted); word-break: break-all;">${url || 'Configurado com Usuário/Senha'}</small>
                     </div>
                     <button class="btn-list-all" onclick="fetchAndParseM3U('${url}')">
                         <i class="fa-solid fa-rotate"></i> Atualizar
@@ -1237,37 +1264,48 @@
             if (!silent) {
                 progressArea.style.display = 'block';
                 progressFill.style.width = '25%';
-                progressStatus.textContent = 'Baixando lista...';
+                progressStatus.textContent = 'Baixando lista com contorno CORS...';
             }
 
+            let text = '';
             try {
+                // Tentativa 1: Fetch direto
                 const response = await fetch(url);
-                if (!response.ok) throw new Error('Falha ao baixar a lista.');
-                const text = await response.text();
-
-                if (!silent) {
-                    progressFill.style.width = '65%';
-                    progressStatus.textContent = 'Organizando Canais, Filmes e Séries...';
-                }
-
-                parseM3UContent(text);
-
-                if (!silent) {
-                    progressFill.style.width = '100%';
-                    progressStatus.textContent = `Concluído! ${appData.live.length} canais, ${appData.movies.length} filmes e ${appData.series.length} séries.`;
-                }
-
-                document.getElementById('badge-live').textContent = `${appData.live.length} canais`;
-                document.getElementById('badge-movies').textContent = `${appData.movies.length} filmes`;
-                document.getElementById('badge-series').textContent = `${appData.series.length} séries`;
-
-            } catch (err) {
-                console.error(err);
-                if (!silent) {
-                    progressStatus.style.color = '#ff5252';
-                    progressStatus.textContent = 'Erro ao carregar URL (verifique CORS).';
+                if (!response.ok) throw new Error('Falha direta');
+                text = await response.text();
+            } catch (errDirect) {
+                // Tentativa 2: Bypass via Proxy CORS (Necessário no GitHub Pages para HTTP/CORS externos)
+                try {
+                    if (!silent) progressStatus.textContent = 'Usando proxy seguro contra bloqueio CORS...';
+                    const proxyUrl = 'https://api.allorigins.win/raw?url=' + encodeURIComponent(url);
+                    const responseProxy = await fetch(proxyUrl);
+                    if (!responseProxy.ok) throw new Error('Falha no proxy');
+                    text = await responseProxy.text();
+                } catch (errProxy) {
+                    console.error(errProxy);
+                    if (!silent) {
+                        progressStatus.style.color = '#ff5252';
+                        progressStatus.textContent = 'Erro de bloqueio (CORS/URL inválida). Verifique os dados.';
+                    }
+                    return;
                 }
             }
+
+            if (!silent) {
+                progressFill.style.width = '65%';
+                progressStatus.textContent = 'Organizando Canais, Filmes e Séries...';
+            }
+
+            parseM3UContent(text);
+
+            if (!silent) {
+                progressFill.style.width = '100%';
+                progressStatus.textContent = `Concluído! ${appData.live.length} canais, ${appData.movies.length} filmes e ${appData.series.length} séries.`;
+            }
+
+            document.getElementById('badge-live').textContent = `${appData.live.length} canais`;
+            document.getElementById('badge-movies').textContent = `${appData.movies.length} filmes`;
+            document.getElementById('badge-series').textContent = `${appData.series.length} séries`;
         }
 
         function parseM3UContent(m3uText) {
