@@ -776,20 +776,20 @@
                     <label style="color: var(--gold-color); font-weight: 600;"><i class="fa-solid fa-file-arrow-up"></i> Opção 1: Importar Arquivo .M3U / .M3U8</label>
                     <input type="file" id="m3u-file-input" accept=".m3u,.m3u8,.txt" style="display: none;" onchange="handleLocalM3UFile(event)">
                     <button class="btn-primary btn-gold" onclick="document.getElementById('m3u-file-input').click()">
-                        <i class="fa-solid fa-folder-open"></i> Selecionar Arquivo M3U do Celular
+                        <i class="fa-solid fa-folder-open"></i> Selecionar Arquivo M3U do Aparelho
                     </button>
                 </div>
 
                 <hr style="border:0; border-top:1px solid var(--border-color); margin: 15px 0;">
 
-                <!-- OPÇÃO 2: URL -->
+                <!-- OPÇÃO 2: URL, IP ou DNS -->
                 <div class="form-group">
                     <label>Nome da Lista</label>
                     <input type="text" id="playlist-name" class="form-control" value="Totorex IPTV">
                 </div>
                 <div class="form-group">
-                    <label>URL Direta M3U</label>
-                    <input type="url" id="playlist-url" class="form-control" value="http://totorex.lat/get.php?username=31164662&password=72884343&type=m3u_plus&output=hls">
+                    <label>URL, IP ou DNS Direta M3U</label>
+                    <input type="text" id="playlist-url" class="form-control" value="http://totorex.lat/get.php?username=31164662&password=72884343&type=m3u_plus&output=hls">
                 </div>
                 <button class="btn-primary" onclick="saveAndLoadPlaylist()">
                     <i class="fa-solid fa-floppy-disk"></i> Salvar e Carregar via Rede
@@ -1138,11 +1138,14 @@
         }
 
         async function saveAndLoadPlaylist() {
-            const name = document.getElementById('playlist-name').value.trim() || 'Totorex IPTV';
-            const url = document.getElementById('playlist-url').value.trim();
+            let name = document.getElementById('playlist-name').value.trim() || 'Totorex IPTV';
+            let url = document.getElementById('playlist-url').value.trim();
             if (!url) {
-                alert('Informe a URL da lista.');
+                alert('Informe a URL, IP ou DNS da lista.');
                 return;
+            }
+            if (!url.startsWith('http://') && !url.startsWith('https://')) {
+                url = 'http://' + url;
             }
             localStorage.setItem('milplay_playlist_meta', JSON.stringify({ name, url }));
             renderSavedPlaylistInfo();
@@ -1196,14 +1199,22 @@
             if (!silent) {
                 progressArea.style.display = 'block';
                 progressFill.style.width = '25%';
-                progressStatus.textContent = 'Carregando lista do servidor...';
+                progressStatus.textContent = 'Carregando lista...';
             }
 
             try {
-                const res = await fetch(url);
-                if (!res.ok) throw new Error('Falha na rede');
-                const text = await res.text();
-                
+                let text = '';
+                try {
+                    const res = await fetch(url);
+                    if (!res.ok) throw new Error('Falha direta');
+                    text = await res.text();
+                } catch (directErr) {
+                    // Fallback automático via proxy CORS para GitHub Pages
+                    const proxyRes = await fetch(`https://api.allorigins.win/raw?url=${encodeURIComponent(url)}`);
+                    if (!proxyRes.ok) throw new Error('Falha no proxy');
+                    text = await proxyRes.text();
+                }
+
                 if (!text.includes('#EXTM3U')) throw new Error('Formato inválido');
 
                 parseM3UContent(text);
@@ -1217,19 +1228,9 @@
                 document.getElementById('badge-movies').textContent = `${appData.movies.length} filmes`;
                 document.getElementById('badge-series').textContent = `${appData.series.length} séries`;
             } catch (err) {
-                try {
-                    const proxyRes = await fetch(`https://api.allorigins.win/raw?url=${encodeURIComponent(url)}`);
-                    const proxyText = await proxyRes.text();
-                    parseM3UContent(proxyText);
-                    if (!silent) progressArea.style.display = 'none';
-                    document.getElementById('badge-live').textContent = `${appData.live.length} canais`;
-                    document.getElementById('badge-movies').textContent = `${appData.movies.length} filmes`;
-                    document.getElementById('badge-series').textContent = `${appData.series.length} séries`;
-                } catch (e2) {
-                    if (!silent) {
-                        progressStatus.style.color = '#ff5252';
-                        progressStatus.textContent = 'Erro ao carregar lista. Verifique sua conexão ou utilize arquivo local.';
-                    }
+                if (!silent) {
+                    progressStatus.style.color = '#ff5252';
+                    progressStatus.textContent = 'Erro ao carregar lista. Verifique a URL, IP, DNS ou utilize arquivo local.';
                 }
             }
         }
@@ -1253,7 +1254,7 @@
                         group: groupMatch && groupMatch[1] ? groupMatch[1].trim() : 'Geral',
                         url: ''
                     };
-                } else if (line.startsWith('http') && currentItem) {
+                } else if ((line.startsWith('http') || line.startsWith('https') || line.startsWith('rtmp') || line.startsWith('rtsp')) && currentItem) {
                     currentItem.url = line;
                     classifyItem(currentItem);
                     currentItem = null;
