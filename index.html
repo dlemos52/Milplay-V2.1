@@ -1058,7 +1058,7 @@
         }
 
         /* =====================================================================
-           CÓDIGO ORIGINAL PRESERVADO + ARQUIVO LOCAL + CASCATA ANTI-CORS
+           ESTRUTURA DE DADOS E CONFIGURAÇÕES
         ===================================================================== */
         let appData = { live: [], movies: [], series: [] };
         let hlsLive = null;
@@ -1224,7 +1224,7 @@
             }
         });
 
-        /* ================= CARREGAR ARQUIVO .M3U LOCAL (ZERO BLOQUEIO CORS) ================= */
+        /* ================= CARREGAR ARQUIVO .M3U LOCAL ================= */
         function handleLocalM3UFile(event) {
             const file = event.target.files[0];
             if (!file) return;
@@ -1351,9 +1351,7 @@
                             break;
                         }
                     }
-                } catch (e) {
-                    // Continua para a próxima rota
-                }
+                } catch (e) {}
             }
 
             if (!success) {
@@ -1476,6 +1474,7 @@
             `).join('');
         }
 
+        /* ================= REPRODUÇÃO DE CANAIS AO VIVO (CORREÇÃO DE PROTOCOLO) ================= */
         function playLivePreview(url, name, group, el) {
             if (el && el.classList.contains('selected')) {
                 expandLiveVideo();
@@ -1491,35 +1490,26 @@
             const video = document.getElementById('live-video');
             if (hlsLive) { hlsLive.destroy(); hlsLive = null; }
 
-            let safeUrl = url;
+            // Se o site estiver em HTTPS e o stream for HTTP, redireciona via proxy CORS/Media para desbloquear no GitHub
+            let playUrl = url;
             if (window.location.protocol === 'https:' && url.startsWith('http://')) {
-                safeUrl = `https://api.allorigins.win/raw?url=${encodeURIComponent(url)}`;
+                playUrl = `https://api.allorigins.win/raw?url=${encodeURIComponent(url)}`;
             }
 
-            if (Hls.isSupported() && (safeUrl.includes('.m3u8') || safeUrl.includes('m3u_plus') || !safeUrl.endsWith('.ts'))) {
-                hlsLive = new Hls({
-                    xhrSetup: function (xhr, url) {
-                        xhr.withCredentials = false;
-                    }
-                });
-                hlsLive.loadSource(safeUrl);
+            if (Hls.isSupported() && (playUrl.includes('.m3u8') || playUrl.includes('m3u_plus') || !playUrl.endsWith('.ts'))) {
+                hlsLive = new Hls();
+                hlsLive.loadSource(playUrl);
                 hlsLive.attachMedia(video);
-                hlsLive.on(Hls.Events.MANIFEST_PARSED, () => {
-                    video.play().catch(err => {
-                        console.warn("Autoplay bloqueado:", err);
-                    });
-                });
-                hlsLive.on(Hls.Events.ERROR, function (event, data) {
+                hlsLive.on(Hls.Events.MANIFEST_PARSED, () => video.play().catch(() => {}));
+                hlsLive.on(Hls.Events.ERROR, function(event, data) {
                     if (data.fatal) {
-                        video.src = url;
+                        video.src = url; // Tenta o link original caso o proxy falhe
                         video.play().catch(() => {});
                     }
                 });
             } else {
-                video.src = url;
-                video.play().catch(err => {
-                    console.warn("Erro ao reproduzir stream direto:", err);
-                });
+                video.src = playUrl;
+                video.play().catch(() => {});
             }
         }
 
@@ -1544,6 +1534,7 @@
             }, {});
         }
 
+        /* ================= VOD (FILMES E SÉRIES) ================= */
         function renderVodCatalog(type) {
             const container = document.getElementById(`${type}-catalog-container`);
             document.getElementById(`btn-reset-${type}`).style.display = 'none';
@@ -1672,13 +1663,18 @@
             modal.classList.add('active');
             if (hlsVod) { hlsVod.destroy(); hlsVod = null; }
 
-            if (Hls.isSupported() && url.includes('.m3u8')) {
+            let playUrl = url;
+            if (window.location.protocol === 'https:' && url.startsWith('http://')) {
+                playUrl = `https://api.allorigins.win/raw?url=${encodeURIComponent(url)}`;
+            }
+
+            if (Hls.isSupported() && playUrl.includes('.m3u8')) {
                 hlsVod = new Hls();
-                hlsVod.loadSource(url);
+                hlsVod.loadSource(playUrl);
                 hlsVod.attachMedia(video);
                 hlsVod.on(Hls.Events.MANIFEST_PARSED, () => video.play().catch(() => {}));
             } else {
-                video.src = url;
+                video.src = playUrl;
                 video.play().catch(() => {});
             }
         }
