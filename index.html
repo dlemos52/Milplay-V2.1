@@ -771,9 +771,9 @@
             <div class="panel-box">
                 <h2><i class="fa-solid fa-cloud-arrow-down"></i> Carregar Lista M3U</h2>
 
-                <!-- OPÇÃO 1: ARQUIVO LOCAL (SEM BLOQUEIO CORS / GITHUB) -->
+                <!-- OPÇÃO 1: ARQUIVO LOCAL -->
                 <div class="form-group" style="background: rgba(255, 215, 0, 0.08); padding: 12px; border-radius: 8px; border: 1px dashed var(--gold-color);">
-                    <label style="color: var(--gold-color); font-weight: 600;"><i class="fa-solid fa-file-arrow-up"></i> Opção 1: Importar Arquivo .M3U / .M3U8 (Sem Bloqueio)</label>
+                    <label style="color: var(--gold-color); font-weight: 600;"><i class="fa-solid fa-file-arrow-up"></i> Opção 1: Importar Arquivo .M3U / .M3U8</label>
                     <input type="file" id="m3u-file-input" accept=".m3u,.m3u8,.txt" style="display: none;" onchange="handleLocalM3UFile(event)">
                     <button class="btn-primary btn-gold" onclick="document.getElementById('m3u-file-input').click()">
                         <i class="fa-solid fa-folder-open"></i> Selecionar Arquivo M3U do Celular
@@ -782,29 +782,14 @@
 
                 <hr style="border:0; border-top:1px solid var(--border-color); margin: 15px 0;">
 
-                <!-- OPÇÃO 2: URL OU USUÁRIO E SENHA -->
+                <!-- OPÇÃO 2: URL -->
                 <div class="form-group">
                     <label>Nome da Lista</label>
-                    <input type="text" id="playlist-name" class="form-control" placeholder="Ex: Minha Lista Principal">
+                    <input type="text" id="playlist-name" class="form-control" value="Totorex IPTV">
                 </div>
                 <div class="form-group">
-                    <label>Opção 2: URL Direta M3U (Pastebin / HTTPS / HTTP)</label>
-                    <input type="url" id="playlist-url" class="form-control" placeholder="https://pastebin.com/raw/xxxxxx">
-                </div>
-                <p style="color: var(--accent-blue); font-size: 0.9rem; margin-bottom: 10px;"><i class="fa-solid fa-key"></i> Ou Opção 3: Servidor com Usuário e Senha:</p>
-                <div class="form-group">
-                    <label>URL do Servidor (ex: http://servidor.com:8080)</label>
-                    <input type="url" id="server-host" class="form-control" placeholder="http://servidor.com:8080">
-                </div>
-                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
-                    <div class="form-group">
-                        <label>Usuário</label>
-                        <input type="text" id="server-user" class="form-control" placeholder="Usuário">
-                    </div>
-                    <div class="form-group">
-                        <label>Senha</label>
-                        <input type="password" id="server-pass" class="form-control" placeholder="Senha">
-                    </div>
+                    <label>URL Direta M3U</label>
+                    <input type="url" id="playlist-url" class="form-control" value="http://totorex.lat/get.php?username=31164662&password=72884343&type=m3u_plus&output=hls">
                 </div>
                 <button class="btn-primary" onclick="saveAndLoadPlaylist()">
                     <i class="fa-solid fa-floppy-disk"></i> Salvar e Carregar via Rede
@@ -821,11 +806,7 @@
             <div class="panel-box">
                 <h2><i class="fa-solid fa-list-check"></i> Lista Ativa no Dispositivo</h2>
                 <div id="saved-playlist-container">
-                    <p style="color: var(--text-muted);">Nenhuma lista salva ainda.</p>
-                </div>
-                <div style="margin-top: 20px; padding: 14px; background: var(--bg-card); border-radius: 8px; font-size: 0.85rem; color: var(--text-muted); line-height: 1.5;">
-                    <strong style="color: var(--text-white);"><i class="fa-solid fa-circle-info" style="color: var(--accent-blue);"></i> Dica para GitHub Pages (Mobile):</strong><br>
-                    Como o GitHub Pages roda em <strong>HTTPS</strong>, os navegadores do celular bloqueiam links IPTV em <strong>HTTP</strong> por segurança (Mixed Content/CORS). Se o link direto falhar, baixe o arquivo <code>.m3u</code> no navegador e use o botão dourado <strong>Selecionar Arquivo M3U do Celular</strong> acima.
+                    <p style="color: var(--text-muted);">Nenhuma lista salva.</p>
                 </div>
             </div>
         </div>
@@ -941,25 +922,6 @@
                         <option value="24h">24 Horas</option>
                     </select>
                 </div>
-                <div class="form-group">
-                    <label>Definir Data</label>
-                    <input type="date" id="setting-manual-date" class="form-control">
-                </div>
-                <div class="form-group">
-                    <label>Definir Hora</label>
-                    <div style="display: flex; gap: 8px;">
-                        <input type="number" id="setting-manual-hour" class="form-control" min="1" max="12" placeholder="Hora">
-                        <input type="number" id="setting-manual-minute" class="form-control" min="0" max="59" placeholder="Min">
-                        <select id="setting-manual-ampm" class="form-control" style="max-width: 90px;">
-                            <option value="AM">AM</option>
-                            <option value="PM">PM</option>
-                        </select>
-                    </div>
-                </div>
-                <div style="display: flex; gap: 8px;">
-                    <button class="btn-primary" onclick="applyManualDateTime()">Aplicar</button>
-                    <button class="btn-primary" style="background: var(--bg-card); border: 1px solid var(--border-color);" onclick="resetAutoDateTime()">Automático</button>
-                </div>
             </div>
         </div>
     </section>
@@ -974,9 +936,6 @@
     </div>
 
     <script>
-        /* =====================================================================
-           FORÇAR ORIENTAÇÃO PAISAGEM NO CELULAR & MENU LATERAL
-        ===================================================================== */
         window.addEventListener('DOMContentLoaded', () => {
             if (screen.orientation && screen.orientation.lock) {
                 screen.orientation.lock('landscape').catch(() => {});
@@ -992,22 +951,14 @@
 
         function touchTopZone(el) {
             el.classList.add('touched');
-            setTimeout(() => {
-                el.classList.remove('touched');
-            }, 3500);
+            setTimeout(() => { el.classList.remove('touched'); }, 3500);
         }
 
-        /* =====================================================================
-           EFEITOS SONOROS SMART TV (APENAS NOS CARDS DA TELA INICIAL)
-        ===================================================================== */
         let tvAudioCtx = null;
-
         function ensureAudioContext() {
             if (!tvAudioCtx) {
                 const AudioContextClass = window.AudioContext || window.webkitAudioContext;
-                if (AudioContextClass) {
-                    tvAudioCtx = new AudioContextClass();
-                }
+                if (AudioContextClass) tvAudioCtx = new AudioContextClass();
             }
             if (tvAudioCtx && tvAudioCtx.state === 'suspended') {
                 tvAudioCtx.resume().catch(() => {});
@@ -1057,83 +1008,19 @@
             openSection(sectionId);
         }
 
-        /* =====================================================================
-           ESTRUTURA DE DADOS E CONFIGURAÇÕES
-        ===================================================================== */
         let appData = { live: [], movies: [], series: [] };
         let hlsLive = null;
         let hlsVod = null;
         let currentLiveCategory = 'Todos';
         let vodPagination = { movies: 6, series: 6 };
 
-        let timeConfig = {
-            format: 'ampm',
-            offsetMs: 0
-        };
+        let timeConfig = { format: 'ampm', offsetMs: 0 };
 
         function loadTimeSettings() {
             const saved = localStorage.getItem('milplay_time_settings');
-            if (saved) {
-                try { timeConfig = JSON.parse(saved); } catch (e) {}
-            }
+            if (saved) { try { timeConfig = JSON.parse(saved); } catch (e) {} }
             const formatSelect = document.getElementById('setting-time-format');
             if (formatSelect) formatSelect.value = timeConfig.format || 'ampm';
-            populateManualInputs();
-        }
-
-        function populateManualInputs() {
-            const current = new Date(Date.now() + (timeConfig.offsetMs || 0));
-            const yyyy = current.getFullYear();
-            const mm = String(current.getMonth() + 1).padStart(2, '0');
-            const dd = String(current.getDate()).padStart(2, '0');
-
-            const dateInput = document.getElementById('setting-manual-date');
-            const hourInput = document.getElementById('setting-manual-hour');
-            const minInput = document.getElementById('setting-manual-minute');
-            const ampmSelect = document.getElementById('setting-manual-ampm');
-
-            if (dateInput) dateInput.value = `${yyyy}-${mm}-${dd}`;
-            let h = current.getHours();
-            const ampm = h >= 12 ? 'PM' : 'AM';
-            h = h % 12 || 12;
-            if (hourInput) hourInput.value = h;
-            if (minInput) minInput.value = String(current.getMinutes()).padStart(2, '0');
-            if (ampmSelect) ampmSelect.value = ampm;
-        }
-
-        function saveTimeSettings() {
-            const formatSelect = document.getElementById('setting-time-format');
-            if (formatSelect) timeConfig.format = formatSelect.value;
-            localStorage.setItem('milplay_time_settings', JSON.stringify(timeConfig));
-            updateDateTime();
-        }
-
-        function applyManualDateTime() {
-            const dateVal = document.getElementById('setting-manual-date').value;
-            let hourVal = parseInt(document.getElementById('setting-manual-hour').value, 10);
-            let minVal = parseInt(document.getElementById('setting-manual-minute').value, 10);
-            const ampmVal = document.getElementById('setting-manual-ampm').value;
-
-            if (!dateVal || isNaN(hourVal) || isNaN(minVal) || hourVal < 1 || hourVal > 12 || minVal < 0 || minVal > 59) {
-                alert('Informe uma data válida, hora entre 01 e 12, e minutos entre 00 e 59.');
-                return;
-            }
-
-            let hours24 = hourVal % 12;
-            if (ampmVal === 'PM') hours24 += 12;
-
-            const [year, month, day] = dateVal.split('-').map(Number);
-            const targetDate = new Date(year, month - 1, day, hours24, minVal, new Date().getSeconds());
-            timeConfig.offsetMs = targetDate.getTime() - Date.now();
-            saveTimeSettings();
-            alert('Data e hora atualizadas com sucesso!');
-        }
-
-        function resetAutoDateTime() {
-            timeConfig.offsetMs = 0;
-            saveTimeSettings();
-            populateManualInputs();
-            alert('Data e hora restauradas para o automático.');
         }
 
         function toggleFullScreen() {
@@ -1183,13 +1070,12 @@
             if (sectionId === 'view-movies') renderVodCatalog('movies');
             if (sectionId === 'view-series') renderVodCatalog('series');
             if (sectionId === 'view-playlist') renderSavedPlaylistInfo();
-            if (sectionId === 'view-settings') populateManualInputs();
         }
 
         const cards = document.querySelectorAll('.menu-card');
         let homeIndex = 0;
         window.addEventListener('DOMContentLoaded', () => {
-            cards[0].focus();
+            if (cards.length > 0) cards[0].focus();
             loadSavedPlaylistOnBoot();
 
             cards.forEach((card, idx) => {
@@ -1224,7 +1110,6 @@
             }
         });
 
-        /* ================= CARREGAR ARQUIVO .M3U LOCAL ================= */
         function handleLocalM3UFile(event) {
             const file = event.target.files[0];
             if (!file) return;
@@ -1235,22 +1120,17 @@
 
             progressArea.style.display = 'block';
             progressFill.style.width = '40%';
-            progressStatus.style.color = 'var(--accent-blue)';
             progressStatus.textContent = `Lendo arquivo ${file.name}...`;
 
             const reader = new FileReader();
             reader.onload = function(e) {
-                const text = e.target.result;
-                parseM3UContent(text);
-
+                parseM3UContent(e.target.result);
                 progressFill.style.width = '100%';
-                progressStatus.textContent = `Arquivo carregado! ${appData.live.length} canais, ${appData.movies.length} filmes e ${appData.series.length} séries.`;
-
+                progressStatus.textContent = `Carregado! ${appData.live.length} canais, ${appData.movies.length} filmes, ${appData.series.length} séries.`;
                 document.getElementById('badge-playlist').textContent = file.name;
                 document.getElementById('badge-live').textContent = `${appData.live.length} canais`;
                 document.getElementById('badge-movies').textContent = `${appData.movies.length} filmes`;
                 document.getElementById('badge-series').textContent = `${appData.series.length} séries`;
-
                 localStorage.setItem('milplay_playlist_meta', JSON.stringify({ name: file.name, url: 'Arquivo Local' }));
                 renderSavedPlaylistInfo();
             };
@@ -1258,46 +1138,42 @@
         }
 
         async function saveAndLoadPlaylist() {
-            const name = document.getElementById('playlist-name').value.trim() || 'Minha Lista';
-            let url = document.getElementById('playlist-url').value.trim();
-            const host = document.getElementById('server-host').value.trim();
-            const user = document.getElementById('server-user').value.trim();
-            const pass = document.getElementById('server-pass').value.trim();
-
-            if (!url && (!host || !user || !pass)) {
-                alert('Informe uma URL M3U, preencha Servidor/Usuário/Senha, ou selecione um arquivo .m3u local.');
+            const name = document.getElementById('playlist-name').value.trim() || 'Totorex IPTV';
+            const url = document.getElementById('playlist-url').value.trim();
+            if (!url) {
+                alert('Informe a URL da lista.');
                 return;
             }
-
-            if (!url && host && user && pass) {
-                let cleanHost = host.endsWith('/') ? host.slice(0, -1) : host;
-                url = `${cleanHost}/get.php?username=${encodeURIComponent(user)}&password=${encodeURIComponent(pass)}&type=m3u_plus&output=ts`;
-            }
-
-            localStorage.setItem('milplay_playlist_meta', JSON.stringify({ name, url, host, user, pass }));
+            localStorage.setItem('milplay_playlist_meta', JSON.stringify({ name, url }));
             renderSavedPlaylistInfo();
             await fetchAndParseM3U(url);
         }
 
         function loadSavedPlaylistOnBoot() {
             const saved = localStorage.getItem('milplay_playlist_meta');
+            let targetUrl = "http://totorex.lat/get.php?username=31164662&password=72884343&type=m3u_plus&output=hls";
+            let targetName = "Totorex IPTV";
+
             if (saved) {
-                const { name, url, host, user, pass } = JSON.parse(saved);
-                if(name) document.getElementById('playlist-name').value = name;
-                if(url && url !== 'Arquivo Local') document.getElementById('playlist-url').value = url;
-                if(host) document.getElementById('server-host').value = host;
-                if(user) document.getElementById('server-user').value = user;
-                if(pass) document.getElementById('server-pass').value = pass;
-                document.getElementById('badge-playlist').textContent = name;
-                if(url && url !== 'Arquivo Local') fetchAndParseM3U(url, true);
+                try {
+                    const data = JSON.parse(saved);
+                    if (data.url && data.url !== 'Arquivo Local') targetUrl = data.url;
+                    if (data.name) targetName = data.name;
+                } catch (e) {}
             }
+
+            document.getElementById('playlist-name').value = targetName;
+            document.getElementById('playlist-url').value = targetUrl;
+            document.getElementById('badge-playlist').textContent = targetName;
+            
+            fetchAndParseM3U(targetUrl, true);
         }
 
         function renderSavedPlaylistInfo() {
             const saved = localStorage.getItem('milplay_playlist_meta');
             const container = document.getElementById('saved-playlist-container');
             if (!saved) {
-                container.innerHTML = '<p style="color: var(--text-muted);">Nenhuma lista salva ainda.</p>';
+                container.innerHTML = '<p style="color: var(--text-muted);">Nenhuma lista salva.</p>';
                 return;
             }
             const { name, url } = JSON.parse(saved);
@@ -1312,7 +1188,6 @@
             `;
         }
 
-        /* ================= CASCATA ANTI-BLOQUEIO CORS / GITHUB ================= */
         async function fetchAndParseM3U(url, silent = false) {
             const progressArea = document.getElementById('progress-area');
             const progressFill = document.getElementById('progress-bar-fill');
@@ -1320,63 +1195,43 @@
 
             if (!silent) {
                 progressArea.style.display = 'block';
-                progressFill.style.width = '20%';
-                progressStatus.style.color = 'var(--accent-blue)';
-                progressStatus.textContent = 'Conectando (Rota 1/4: Direta)...';
+                progressFill.style.width = '25%';
+                progressStatus.textContent = 'Carregando lista do servidor...';
             }
 
-            const encoded = encodeURIComponent(url);
-            const routes = [
-                { name: 'Direta', target: url },
-                { name: 'Proxy CorsProxy.io', target: `https://corsproxy.io/?${encoded}` },
-                { name: 'Proxy CodeTabs', target: `https://api.codetabs.com/v1/proxy?quest=${encoded}` },
-                { name: 'Proxy AllOrigins', target: `https://api.allorigins.win/raw?url=${encoded}` }
-            ];
+            try {
+                const res = await fetch(url);
+                if (!res.ok) throw new Error('Falha na rede');
+                const text = await res.text();
+                
+                if (!text.includes('#EXTM3U')) throw new Error('Formato inválido');
 
-            let text = '';
-            let success = false;
+                parseM3UContent(text);
 
-            for (let i = 0; i < routes.length; i++) {
-                try {
-                    if (!silent) {
-                        progressFill.style.width = `${20 + (i * 15)}%`;
-                        progressStatus.textContent = `Tentando ${routes[i].name}...`;
-                    }
-                    const res = await fetch(routes[i].target);
-                    if (res.ok) {
-                        const content = await res.text();
-                        if (content && content.includes('#EXTM3U')) {
-                            text = content;
-                            success = true;
-                            break;
-                        }
-                    }
-                } catch (e) {}
-            }
-
-            if (!success) {
                 if (!silent) {
-                    progressStatus.style.color = '#ff5252';
-                    progressStatus.innerHTML = 'O servidor bloqueou o acesso remoto pelo GitHub (HTTP/CORS).<br><strong>Solução:</strong> Baixe o arquivo .m3u no navegador e clique no botão dourado <strong>Selecionar Arquivo M3U do Celular</strong> acima.';
+                    progressFill.style.width = '100%';
+                    progressStatus.textContent = `Sucesso! ${appData.live.length} canais, ${appData.movies.length} filmes, ${appData.series.length} séries.`;
                 }
-                return;
+
+                document.getElementById('badge-live').textContent = `${appData.live.length} canais`;
+                document.getElementById('badge-movies').textContent = `${appData.movies.length} filmes`;
+                document.getElementById('badge-series').textContent = `${appData.series.length} séries`;
+            } catch (err) {
+                try {
+                    const proxyRes = await fetch(`https://api.allorigins.win/raw?url=${encodeURIComponent(url)}`);
+                    const proxyText = await proxyRes.text();
+                    parseM3UContent(proxyText);
+                    if (!silent) progressArea.style.display = 'none';
+                    document.getElementById('badge-live').textContent = `${appData.live.length} canais`;
+                    document.getElementById('badge-movies').textContent = `${appData.movies.length} filmes`;
+                    document.getElementById('badge-series').textContent = `${appData.series.length} séries`;
+                } catch (e2) {
+                    if (!silent) {
+                        progressStatus.style.color = '#ff5252';
+                        progressStatus.textContent = 'Erro ao carregar lista. Verifique sua conexão ou utilize arquivo local.';
+                    }
+                }
             }
-
-            if (!silent) {
-                progressFill.style.width = '80%';
-                progressStatus.textContent = 'Organizando Canais, Filmes e Séries...';
-            }
-
-            parseM3UContent(text);
-
-            if (!silent) {
-                progressFill.style.width = '100%';
-                progressStatus.textContent = `Concluído! ${appData.live.length} canais, ${appData.movies.length} filmes e ${appData.series.length} séries.`;
-            }
-
-            document.getElementById('badge-live').textContent = `${appData.live.length} canais`;
-            document.getElementById('badge-movies').textContent = `${appData.movies.length} filmes`;
-            document.getElementById('badge-series').textContent = `${appData.series.length} séries`;
         }
 
         function parseM3UContent(m3uText) {
@@ -1423,7 +1278,7 @@
         function clearPlaylistData() {
             localStorage.removeItem('milplay_playlist_meta');
             appData = { live: [], movies: [], series: [] };
-            alert('Cache limpo com sucesso.');
+            alert('Cache limpo.');
             location.reload();
         }
 
@@ -1474,7 +1329,6 @@
             `).join('');
         }
 
-        /* ================= REPRODUÇÃO DE CANAIS AO VIVO (CORREÇÃO DE PROTOCOLO) ================= */
         function playLivePreview(url, name, group, el) {
             if (el && el.classList.contains('selected')) {
                 expandLiveVideo();
@@ -1490,25 +1344,15 @@
             const video = document.getElementById('live-video');
             if (hlsLive) { hlsLive.destroy(); hlsLive = null; }
 
-            // Se o site estiver em HTTPS e o stream for HTTP, redireciona via proxy CORS/Media para desbloquear no GitHub
-            let playUrl = url;
-            if (window.location.protocol === 'https:' && url.startsWith('http://')) {
-                playUrl = `https://api.allorigins.win/raw?url=${encodeURIComponent(url)}`;
-            }
-
-            if (Hls.isSupported() && (playUrl.includes('.m3u8') || playUrl.includes('m3u_plus') || !playUrl.endsWith('.ts'))) {
-                hlsLive = new Hls();
-                hlsLive.loadSource(playUrl);
+            if (Hls.isSupported()) {
+                hlsLive = new Hls({
+                    xhrSetup: function(xhr, url) { xhr.withCredentials = false; }
+                });
+                hlsLive.loadSource(url);
                 hlsLive.attachMedia(video);
                 hlsLive.on(Hls.Events.MANIFEST_PARSED, () => video.play().catch(() => {}));
-                hlsLive.on(Hls.Events.ERROR, function(event, data) {
-                    if (data.fatal) {
-                        video.src = url; // Tenta o link original caso o proxy falhe
-                        video.play().catch(() => {});
-                    }
-                });
             } else {
-                video.src = playUrl;
+                video.src = url;
                 video.play().catch(() => {});
             }
         }
@@ -1534,7 +1378,6 @@
             }, {});
         }
 
-        /* ================= VOD (FILMES E SÉRIES) ================= */
         function renderVodCatalog(type) {
             const container = document.getElementById(`${type}-catalog-container`);
             document.getElementById(`btn-reset-${type}`).style.display = 'none';
@@ -1663,18 +1506,13 @@
             modal.classList.add('active');
             if (hlsVod) { hlsVod.destroy(); hlsVod = null; }
 
-            let playUrl = url;
-            if (window.location.protocol === 'https:' && url.startsWith('http://')) {
-                playUrl = `https://api.allorigins.win/raw?url=${encodeURIComponent(url)}`;
-            }
-
-            if (Hls.isSupported() && playUrl.includes('.m3u8')) {
+            if (Hls.isSupported()) {
                 hlsVod = new Hls();
-                hlsVod.loadSource(playUrl);
+                hlsVod.loadSource(url);
                 hlsVod.attachMedia(video);
                 hlsVod.on(Hls.Events.MANIFEST_PARSED, () => video.play().catch(() => {}));
             } else {
-                video.src = playUrl;
+                video.src = url;
                 video.play().catch(() => {});
             }
         }
