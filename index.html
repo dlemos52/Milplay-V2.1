@@ -1202,37 +1202,46 @@
                 progressStatus.textContent = 'Carregando lista...';
             }
 
-            try {
-                let text = '';
+            let text = '';
+            const proxies = [
+                url, // Tentativa direta
+                `https://api.allorigins.win/raw?url=${encodeURIComponent(url)}`,
+                `https://corsproxy.io/?${encodeURIComponent(url)}`,
+                `https://api.codetabs.com/v1/proxy?quest=${encodeURIComponent(url)}`
+            ];
+
+            let success = false;
+            for (let pUrl of proxies) {
                 try {
-                    const res = await fetch(url);
-                    if (!res.ok) throw new Error('Falha direta');
-                    text = await res.text();
-                } catch (directErr) {
-                    // Fallback automático via proxy CORS para GitHub Pages
-                    const proxyRes = await fetch(`https://api.allorigins.win/raw?url=${encodeURIComponent(url)}`);
-                    if (!proxyRes.ok) throw new Error('Falha no proxy');
-                    text = await proxyRes.text();
-                }
+                    const res = await fetch(pUrl);
+                    if (res.ok) {
+                        text = await res.text();
+                        if (text && text.includes('#EXTM3U')) {
+                            success = true;
+                            break;
+                        }
+                    }
+                } catch (e) {}
+            }
 
-                if (!text.includes('#EXTM3U')) throw new Error('Formato inválido');
-
-                parseM3UContent(text);
-
-                if (!silent) {
-                    progressFill.style.width = '100%';
-                    progressStatus.textContent = `Sucesso! ${appData.live.length} canais, ${appData.movies.length} filmes, ${appData.series.length} séries.`;
-                }
-
-                document.getElementById('badge-live').textContent = `${appData.live.length} canais`;
-                document.getElementById('badge-movies').textContent = `${appData.movies.length} filmes`;
-                document.getElementById('badge-series').textContent = `${appData.series.length} séries`;
-            } catch (err) {
+            if (!success) {
                 if (!silent) {
                     progressStatus.style.color = '#ff5252';
                     progressStatus.textContent = 'Erro ao carregar lista. Verifique a URL, IP, DNS ou utilize arquivo local.';
                 }
+                return;
             }
+
+            parseM3UContent(text);
+
+            if (!silent) {
+                progressFill.style.width = '100%';
+                progressStatus.textContent = `Sucesso! ${appData.live.length} canais, ${appData.movies.length} filmes, ${appData.series.length} séries.`;
+            }
+
+            document.getElementById('badge-live').textContent = `${appData.live.length} canais`;
+            document.getElementById('badge-movies').textContent = `${appData.movies.length} filmes`;
+            document.getElementById('badge-series').textContent = `${appData.series.length} séries`;
         }
 
         function parseM3UContent(m3uText) {
