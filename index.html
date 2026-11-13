@@ -1491,14 +1491,35 @@
             const video = document.getElementById('live-video');
             if (hlsLive) { hlsLive.destroy(); hlsLive = null; }
 
-            if (Hls.isSupported() && (url.includes('.m3u8') || !url.includes('.'))) {
-                hlsLive = new Hls();
-                hlsLive.loadSource(url);
+            let safeUrl = url;
+            if (window.location.protocol === 'https:' && url.startsWith('http://')) {
+                safeUrl = `https://api.allorigins.win/raw?url=${encodeURIComponent(url)}`;
+            }
+
+            if (Hls.isSupported() && (safeUrl.includes('.m3u8') || safeUrl.includes('m3u_plus') || !safeUrl.endsWith('.ts'))) {
+                hlsLive = new Hls({
+                    xhrSetup: function (xhr, url) {
+                        xhr.withCredentials = false;
+                    }
+                });
+                hlsLive.loadSource(safeUrl);
                 hlsLive.attachMedia(video);
-                hlsLive.on(Hls.Events.MANIFEST_PARSED, () => video.play().catch(() => {}));
+                hlsLive.on(Hls.Events.MANIFEST_PARSED, () => {
+                    video.play().catch(err => {
+                        console.warn("Autoplay bloqueado:", err);
+                    });
+                });
+                hlsLive.on(Hls.Events.ERROR, function (event, data) {
+                    if (data.fatal) {
+                        video.src = url;
+                        video.play().catch(() => {});
+                    }
+                });
             } else {
                 video.src = url;
-                video.play().catch(() => {});
+                video.play().catch(err => {
+                    console.warn("Erro ao reproduzir stream direto:", err);
+                });
             }
         }
 
