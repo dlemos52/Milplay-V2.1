@@ -833,7 +833,7 @@
             <div class="scroll-list" id="live-categories-list"></div>
             <div class="scroll-list" id="live-channels-list"></div>
             <div class="preview-box" id="live-preview-container">
-                <video id="live-video" controls autoplay playsinline></video>
+                <video id="live-video" controls autoplay playsinline crossorigin="anonymous"></video>
                 <div class="preview-info">
                     <div>
                         <h3 id="preview-channel-name" style="font-size: 1rem;">Selecione um canal</h3>
@@ -932,7 +932,7 @@
             <h3 id="vod-playing-title" style="font-size: 1rem;">Reproduzindo...</h3>
             <button class="btn-back" style="padding: 6px 12px; font-size: 0.9rem;" onclick="closeVodPlayer()"><i class="fa-solid fa-xmark"></i> Fechar</button>
         </div>
-        <video id="vod-video-player" controls autoplay playsinline></video>
+        <video id="vod-video-player" controls autoplay playsinline crossorigin="anonymous"></video>
     </div>
 
     <script>
@@ -1204,7 +1204,7 @@
 
             let text = '';
             const proxies = [
-                url, // Tentativa direta
+                url,
                 `https://api.allorigins.win/raw?url=${encodeURIComponent(url)}`,
                 `https://corsproxy.io/?${encodeURIComponent(url)}`,
                 `https://api.codetabs.com/v1/proxy?quest=${encodeURIComponent(url)}`
@@ -1250,7 +1250,7 @@
             let currentItem = null;
 
             for (let i = 0; i < lines.length; i++) {
-                const line = lines[i].trim();
+                let line = lines[i].trim();
                 if (line.startsWith('#EXTINF:')) {
                     const logoMatch = line.match(/tvg-logo="([^"]*)"/i);
                     const groupMatch = line.match(/group-title="([^"]*)"/i);
@@ -1264,6 +1264,9 @@
                         url: ''
                     };
                 } else if ((line.startsWith('http') || line.startsWith('https') || line.startsWith('rtmp') || line.startsWith('rtsp')) && currentItem) {
+                    if (window.location.protocol === 'https:' && line.startsWith('http://')) {
+                        line = line.replace('http://', 'https://');
+                    }
                     currentItem.url = line;
                     classifyItem(currentItem);
                     currentItem = null;
@@ -1278,7 +1281,7 @@
 
             if (g.includes('serie') || g.includes('série') || /s\d{1,2}e\d{1,2}/i.test(n) || u.includes('/series/')) {
                 appData.series.push(item);
-            } else if (g.includes('filme') || g.includes('movie') || g.includes('vod') || u.includes('/movie/') || u.endsWith('.mp4') || u.endsWith('.mkv')) {
+            } else if (g.includes('filme') || g.includes('movie') || g.includes('vod') || u.includes('/movie/') || u.endsWith('.mp4') || u.endsWith('.mkv') || u.endsWith('.avi')) {
                 appData.movies.push(item);
             } else {
                 appData.live.push(item);
@@ -1354,13 +1357,16 @@
             const video = document.getElementById('live-video');
             if (hlsLive) { hlsLive.destroy(); hlsLive = null; }
 
-            if (Hls.isSupported()) {
-                hlsLive = new Hls({
-                    xhrSetup: function(xhr, url) { xhr.withCredentials = false; }
-                });
-                hlsLive.loadSource(url);
-                hlsLive.attachMedia(video);
-                hlsLive.on(Hls.Events.MANIFEST_PARSED, () => video.play().catch(() => {}));
+            if (url.endsWith('.m3u8') || url.includes('output=hls') || Hls.isSupported()) {
+                if (Hls.isSupported()) {
+                    hlsLive = new Hls({ debug: false, xhrSetup: (xhr) => { xhr.withCredentials = false; } });
+                    hlsLive.loadSource(url);
+                    hlsLive.attachMedia(video);
+                    hlsLive.on(Hls.Events.MANIFEST_PARSED, () => video.play().catch(() => {}));
+                } else {
+                    video.src = url;
+                    video.play().catch(() => {});
+                }
             } else {
                 video.src = url;
                 video.play().catch(() => {});
@@ -1516,14 +1522,24 @@
             modal.classList.add('active');
             if (hlsVod) { hlsVod.destroy(); hlsVod = null; }
 
-            if (Hls.isSupported()) {
-                hlsVod = new Hls();
-                hlsVod.loadSource(url);
-                hlsVod.attachMedia(video);
-                hlsVod.on(Hls.Events.MANIFEST_PARSED, () => video.play().catch(() => {}));
+            // Verifica se o VOD é HLS (.m3u8) ou arquivo de vídeo padrão (.mp4, .mkv)
+            if (url.endsWith('.m3u8') || url.includes('type=m3u') || Hls.isSupported() && !url.match(/\.(mp4|mkv|avi|mov)$/i)) {
+                if (Hls.isSupported()) {
+                    hlsVod = new Hls({ debug: false, xhrSetup: (xhr) => { xhr.withCredentials = false; } });
+                    hlsVod.loadSource(url);
+                    hlsVod.attachMedia(video);
+                    hlsVod.on(Hls.Events.MANIFEST_PARSED, () => video.play().catch(() => {}));
+                } else {
+                    video.src = url;
+                    video.play().catch(() => {});
+                }
             } else {
+                // Reprodução direta para arquivos de vídeo (MP4/MKV)
                 video.src = url;
-                video.play().catch(() => {});
+                video.load();
+                video.play().catch((err) => {
+                    console.log("Erro ao reproduzir VOD direto:", err);
+                });
             }
         }
 
