@@ -305,6 +305,7 @@
             height: 84vh;
             align-items: start;
             overflow-y: auto;
+            padding-bottom: 30px;
         }
 
         .panel-box {
@@ -369,6 +370,15 @@
         .btn-primary:hover, .btn-primary:focus {
             background: var(--accent-hover);
             outline: 2px solid white;
+        }
+
+        .btn-gold {
+            background: linear-gradient(135deg, #d4af37, #f5d061);
+            color: #0b0c10;
+        }
+
+        .btn-gold:hover {
+            background: #ffd700;
         }
 
         .progress-area {
@@ -759,17 +769,29 @@
 
         <div class="playlist-wrapper">
             <div class="panel-box">
-                <h2><i class="fa-solid fa-cloud-arrow-down"></i> Adicionar Nova Lista / Xtream</h2>
+                <h2><i class="fa-solid fa-cloud-arrow-down"></i> Carregar Lista M3U</h2>
+
+                <!-- OPÇÃO 1: ARQUIVO LOCAL (SEM BLOQUEIO CORS / GITHUB) -->
+                <div class="form-group" style="background: rgba(255, 215, 0, 0.08); padding: 12px; border-radius: 8px; border: 1px dashed var(--gold-color);">
+                    <label style="color: var(--gold-color); font-weight: 600;"><i class="fa-solid fa-file-arrow-up"></i> Opção 1: Importar Arquivo .M3U / .M3U8 (Sem Bloqueio)</label>
+                    <input type="file" id="m3u-file-input" accept=".m3u,.m3u8,.txt" style="display: none;" onchange="handleLocalM3UFile(event)">
+                    <button class="btn-primary btn-gold" onclick="document.getElementById('m3u-file-input').click()">
+                        <i class="fa-solid fa-folder-open"></i> Selecionar Arquivo M3U do Celular
+                    </button>
+                </div>
+
+                <hr style="border:0; border-top:1px solid var(--border-color); margin: 15px 0;">
+
+                <!-- OPÇÃO 2: URL OU USUÁRIO E SENHA -->
                 <div class="form-group">
                     <label>Nome da Lista</label>
                     <input type="text" id="playlist-name" class="form-control" placeholder="Ex: Minha Lista Principal">
                 </div>
                 <div class="form-group">
-                    <label>URL Direta M3U (Opcional)</label>
-                    <input type="url" id="playlist-url" class="form-control" placeholder="http://exemplo.com/lista.m3u">
+                    <label>Opção 2: URL Direta M3U (Pastebin / HTTPS / HTTP)</label>
+                    <input type="url" id="playlist-url" class="form-control" placeholder="https://pastebin.com/raw/xxxxxx">
                 </div>
-                <hr style="border:0; border-top:1px solid var(--border-color); margin: 15px 0;">
-                <p style="color: var(--gold-color); font-size: 0.9rem; margin-bottom: 10px;"><i class="fa-solid fa-key"></i> Ou Acesso com Usuário e Senha:</p>
+                <p style="color: var(--accent-blue); font-size: 0.9rem; margin-bottom: 10px;"><i class="fa-solid fa-key"></i> Ou Opção 3: Servidor com Usuário e Senha:</p>
                 <div class="form-group">
                     <label>URL do Servidor (ex: http://servidor.com:8080)</label>
                     <input type="url" id="server-host" class="form-control" placeholder="http://servidor.com:8080">
@@ -785,7 +807,7 @@
                     </div>
                 </div>
                 <button class="btn-primary" onclick="saveAndLoadPlaylist()">
-                    <i class="fa-solid fa-floppy-disk"></i> Salvar e Carregar Lista Completa
+                    <i class="fa-solid fa-floppy-disk"></i> Salvar e Carregar via Rede
                 </button>
 
                 <div class="progress-area" id="progress-area">
@@ -800,6 +822,10 @@
                 <h2><i class="fa-solid fa-list-check"></i> Lista Ativa no Dispositivo</h2>
                 <div id="saved-playlist-container">
                     <p style="color: var(--text-muted);">Nenhuma lista salva ainda.</p>
+                </div>
+                <div style="margin-top: 20px; padding: 14px; background: var(--bg-card); border-radius: 8px; font-size: 0.85rem; color: var(--text-muted); line-height: 1.5;">
+                    <strong style="color: var(--text-white);"><i class="fa-solid fa-circle-info" style="color: var(--accent-blue);"></i> Dica para GitHub Pages (Mobile):</strong><br>
+                    Como o GitHub Pages roda em <strong>HTTPS</strong>, os navegadores do celular bloqueiam links IPTV em <strong>HTTP</strong> por segurança (Mixed Content/CORS). Se o link direto falhar, baixe o arquivo <code>.m3u</code> no navegador e use o botão dourado <strong>Selecionar Arquivo M3U do Celular</strong> acima.
                 </div>
             </div>
         </div>
@@ -1032,7 +1058,7 @@
         }
 
         /* =====================================================================
-           CÓDIGO ORIGINAL PRESERVADO + SUPORTE M3U / USER & PASS / PROXY CORS
+           CÓDIGO ORIGINAL PRESERVADO + ARQUIVO LOCAL + CASCATA ANTI-CORS
         ===================================================================== */
         let appData = { live: [], movies: [], series: [] };
         let hlsLive = null;
@@ -1198,6 +1224,39 @@
             }
         });
 
+        /* ================= CARREGAR ARQUIVO .M3U LOCAL (ZERO BLOQUEIO CORS) ================= */
+        function handleLocalM3UFile(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+
+            const progressArea = document.getElementById('progress-area');
+            const progressFill = document.getElementById('progress-bar-fill');
+            const progressStatus = document.getElementById('progress-status');
+
+            progressArea.style.display = 'block';
+            progressFill.style.width = '40%';
+            progressStatus.style.color = 'var(--accent-blue)';
+            progressStatus.textContent = `Lendo arquivo ${file.name}...`;
+
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                const text = e.target.result;
+                parseM3UContent(text);
+
+                progressFill.style.width = '100%';
+                progressStatus.textContent = `Arquivo carregado! ${appData.live.length} canais, ${appData.movies.length} filmes e ${appData.series.length} séries.`;
+
+                document.getElementById('badge-playlist').textContent = file.name;
+                document.getElementById('badge-live').textContent = `${appData.live.length} canais`;
+                document.getElementById('badge-movies').textContent = `${appData.movies.length} filmes`;
+                document.getElementById('badge-series').textContent = `${appData.series.length} séries`;
+
+                localStorage.setItem('milplay_playlist_meta', JSON.stringify({ name: file.name, url: 'Arquivo Local' }));
+                renderSavedPlaylistInfo();
+            };
+            reader.readAsText(file);
+        }
+
         async function saveAndLoadPlaylist() {
             const name = document.getElementById('playlist-name').value.trim() || 'Minha Lista';
             let url = document.getElementById('playlist-url').value.trim();
@@ -1206,14 +1265,13 @@
             const pass = document.getElementById('server-pass').value.trim();
 
             if (!url && (!host || !user || !pass)) {
-                alert('Por favor, informe a URL M3U ou preencha Servidor, Usuário e Senha.');
+                alert('Informe uma URL M3U, preencha Servidor/Usuário/Senha, ou selecione um arquivo .m3u local.');
                 return;
             }
 
-            // Se preencheu usuário e senha, gera a URL Xtream Codes M3U automaticamente
             if (!url && host && user && pass) {
                 let cleanHost = host.endsWith('/') ? host.slice(0, -1) : host;
-                url = `${cleanHost}/get.php?username=${encodeURIComponent(user)}&password=${encodeURIComponent(pass)}&type=m3u`;
+                url = `${cleanHost}/get.php?username=${encodeURIComponent(user)}&password=${encodeURIComponent(pass)}&type=m3u_plus&output=ts`;
             }
 
             localStorage.setItem('milplay_playlist_meta', JSON.stringify({ name, url, host, user, pass }));
@@ -1226,12 +1284,12 @@
             if (saved) {
                 const { name, url, host, user, pass } = JSON.parse(saved);
                 if(name) document.getElementById('playlist-name').value = name;
-                if(url) document.getElementById('playlist-url').value = url;
+                if(url && url !== 'Arquivo Local') document.getElementById('playlist-url').value = url;
                 if(host) document.getElementById('server-host').value = host;
                 if(user) document.getElementById('server-user').value = user;
                 if(pass) document.getElementById('server-pass').value = pass;
                 document.getElementById('badge-playlist').textContent = name;
-                if(url) fetchAndParseM3U(url, true);
+                if(url && url !== 'Arquivo Local') fetchAndParseM3U(url, true);
             }
         }
 
@@ -1247,15 +1305,14 @@
                 <div class="saved-playlist-item">
                     <div>
                         <strong>${name}</strong><br>
-                        <small style="color: var(--text-muted); word-break: break-all;">${url || 'Configurado com Usuário/Senha'}</small>
+                        <small style="color: var(--text-muted); word-break: break-all;">${url}</small>
                     </div>
-                    <button class="btn-list-all" onclick="fetchAndParseM3U('${url}')">
-                        <i class="fa-solid fa-rotate"></i> Atualizar
-                    </button>
+                    ${url !== 'Arquivo Local' ? `<button class="btn-list-all" onclick="fetchAndParseM3U('${url}')"><i class="fa-solid fa-rotate"></i> Atualizar</button>` : ''}
                 </div>
             `;
         }
 
+        /* ================= CASCATA ANTI-BLOQUEIO CORS / GITHUB ================= */
         async function fetchAndParseM3U(url, silent = false) {
             const progressArea = document.getElementById('progress-area');
             const progressFill = document.getElementById('progress-bar-fill');
@@ -1263,36 +1320,52 @@
 
             if (!silent) {
                 progressArea.style.display = 'block';
-                progressFill.style.width = '25%';
-                progressStatus.textContent = 'Baixando lista com contorno CORS...';
+                progressFill.style.width = '20%';
+                progressStatus.style.color = 'var(--accent-blue)';
+                progressStatus.textContent = 'Conectando (Rota 1/4: Direta)...';
             }
 
+            const encoded = encodeURIComponent(url);
+            const routes = [
+                { name: 'Direta', target: url },
+                { name: 'Proxy CorsProxy.io', target: `https://corsproxy.io/?${encoded}` },
+                { name: 'Proxy CodeTabs', target: `https://api.codetabs.com/v1/proxy?quest=${encoded}` },
+                { name: 'Proxy AllOrigins', target: `https://api.allorigins.win/raw?url=${encoded}` }
+            ];
+
             let text = '';
-            try {
-                // Tentativa 1: Fetch direto
-                const response = await fetch(url);
-                if (!response.ok) throw new Error('Falha direta');
-                text = await response.text();
-            } catch (errDirect) {
-                // Tentativa 2: Bypass via Proxy CORS (Necessário no GitHub Pages para HTTP/CORS externos)
+            let success = false;
+
+            for (let i = 0; i < routes.length; i++) {
                 try {
-                    if (!silent) progressStatus.textContent = 'Usando proxy seguro contra bloqueio CORS...';
-                    const proxyUrl = 'https://api.allorigins.win/raw?url=' + encodeURIComponent(url);
-                    const responseProxy = await fetch(proxyUrl);
-                    if (!responseProxy.ok) throw new Error('Falha no proxy');
-                    text = await responseProxy.text();
-                } catch (errProxy) {
-                    console.error(errProxy);
                     if (!silent) {
-                        progressStatus.style.color = '#ff5252';
-                        progressStatus.textContent = 'Erro de bloqueio (CORS/URL inválida). Verifique os dados.';
+                        progressFill.style.width = `${20 + (i * 15)}%`;
+                        progressStatus.textContent = `Tentando ${routes[i].name}...`;
                     }
-                    return;
+                    const res = await fetch(routes[i].target);
+                    if (res.ok) {
+                        const content = await res.text();
+                        if (content && content.includes('#EXTM3U')) {
+                            text = content;
+                            success = true;
+                            break;
+                        }
+                    }
+                } catch (e) {
+                    // Continua para a próxima rota
                 }
             }
 
+            if (!success) {
+                if (!silent) {
+                    progressStatus.style.color = '#ff5252';
+                    progressStatus.innerHTML = 'O servidor bloqueou o acesso remoto pelo GitHub (HTTP/CORS).<br><strong>Solução:</strong> Baixe o arquivo .m3u no navegador e clique no botão dourado <strong>Selecionar Arquivo M3U do Celular</strong> acima.';
+                }
+                return;
+            }
+
             if (!silent) {
-                progressFill.style.width = '65%';
+                progressFill.style.width = '80%';
                 progressStatus.textContent = 'Organizando Canais, Filmes e Séries...';
             }
 
